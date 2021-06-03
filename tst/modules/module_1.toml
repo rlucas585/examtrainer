@@ -1,0 +1,15 @@
+# First module file
+
+[exam_module]
+name = "module_1"
+authors = [
+    "Ryan Lucas"
+]
+
+[compilation]
+test_type = "executable"
+binary = "example_binary"
+args = [
+    [],
+    ["Ryan", "Lucas"]
+]

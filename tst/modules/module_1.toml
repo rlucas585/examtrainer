@@ -1,15 +1,22 @@
 # First module file
 
-[exam_module]
+[info]
 name = "module_1"
 authors = [
     "Ryan Lucas"
 ]
 
-[compilation]
+[submission]
+submission_type = "executable" # Other options: executable
+binary = "binary_name"
+compiler = "gcc"
+flags = ["-Wall", "-Wextra", "-Werror"]
+
+[test]
 test_type = "executable"
 binary = "example_binary"
 args = [
     [],
-    ["Ryan", "Lucas"]
+    ["Ryan", "Lucas"],
+    ["did", "you", "know", "shinigami", "love", "apples"]
 ]

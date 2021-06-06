@@ -7,7 +7,7 @@ authors = [
 ]
 
 [submission]
-submission_type = "executable" # Other options: executable
+submission_type = "executable" # Other options: sources
 binary = "binary_name"
 compiler = "gcc"
 flags = ["-Wall", "-Wextra", "-Werror"]

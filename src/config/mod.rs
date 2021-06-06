@@ -1,3 +1,5 @@
+pub mod exams;
+
 use home::home_dir;
 use serde::Deserialize;
 use std::fmt;
@@ -5,16 +7,27 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::path::Path;
 
-static DEFAULT_CONF: &str = "[directories]
-submit_directory = \"/home/rlucas/rendu\"
-module_directory = \"/home/rlucas/.config/examtrainer/modules\"
-";
+macro_rules! default_conf {
+    ($home:ident) => {
+        format!(
+            "[directories]
+submit_directory = \"{0}/rendu\"
+module_directory = \"{0}/.config/examtrainer/modules\"
+exam_directory = \"{0}/.config/examtrainer/exams\"
+subject_directory = \"{0}/.config/examtrainer/subjects\"
+",
+            $home
+        )
+        .as_bytes()
+    };
+}
 
 #[derive(Debug)]
 enum ErrorKind {
     AbsentConfig,
     IOError(String),
     InvalidConfig(String),
+    AbsentDir(String),
 }
 
 #[derive(Debug)]
@@ -25,7 +38,11 @@ impl fmt::Display for Error {
         match &self.0 {
             ErrorKind::AbsentConfig => {
                 if let Some(home) = home_dir() {
-                    write!(f, "No config file found in {}/.config/", home.display())
+                    write!(
+                        f,
+                        "Missing configuration file: {}/.config/examtrainer",
+                        home.display()
+                    )
                 } else {
                     write!(f, "Unable to locate home directory")
                 }
@@ -34,6 +51,7 @@ impl fmt::Display for Error {
                 write!(f, "IO Error while loading config: {}", e)
             }
             ErrorKind::InvalidConfig(e) => write!(f, "Invalid config file: {}", e),
+            ErrorKind::AbsentDir(e) => write!(f, "Directory {} does not exist", e),
         }
     }
 }
@@ -54,6 +72,8 @@ impl From<toml::de::Error> for Error {
 struct Directories {
     submit_directory: String,
     module_directory: String,
+    exam_directory: String,
+    subject_directory: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -88,11 +108,11 @@ fn create_directory(path: &str) -> Result<(), Error> {
                 Err(e) => Err(e),
             }
         }
-        _ => Err(Error(ErrorKind::AbsentConfig)),
+        _ => Err(Error(ErrorKind::AbsentDir(path.to_string()))),
     }
 }
 
-fn create_default_config(path: &str) -> Result<File, Error> {
+fn create_default_config(home: &str, path: &str) -> Result<File, Error> {
     let mut buffer = String::new();
     let stdin = io::stdin();
     println!("    Warning: Config file {} does not exist", path);
@@ -103,7 +123,7 @@ fn create_default_config(path: &str) -> Result<File, Error> {
             println!("Creating default configuration...");
             match File::create(path).map_err(|e| e.into()) {
                 Ok(mut file) => {
-                    file.write(DEFAULT_CONF.as_bytes())?;
+                    file.write(default_conf!(home))?;
                     println!("Success!");
                     File::open(path).map_err(|e| e.into())
                 }
@@ -120,8 +140,17 @@ impl Config {
         let mut config = Config::open_config_file()?;
         config.read_to_string(&mut buffer)?;
         let config: Config = toml::from_str(&buffer)?;
-        Ok(config)
-        // let config_text = std::fs::read_to_string(format!("{}/{}", home.display()))
+        Config::check_dirs(config) // TODO: Code is unclear here, improve
+    }
+
+    fn check_dirs(self) -> Result<Self, Error> {
+        if Path::new(&self.directories.module_directory).exists() == false {
+            create_directory(&self.directories.module_directory)?;
+        }
+        if Path::new(&self.directories.exam_directory).exists() == false {
+            create_directory(&self.directories.exam_directory)?;
+        }
+        Ok(self)
     }
 
     fn open_config_file() -> Result<File, Error> {
@@ -141,7 +170,9 @@ impl Config {
         File::open(&config_file)
             .or_else(|error| {
                 if error.kind() == io::ErrorKind::NotFound {
-                    create_default_config(&config_file)
+                    // TODO fix this expect
+                    let home_str: &str = home.to_str().expect("Unable to convert Path to str");
+                    create_default_config(home_str, &config_file)
                 } else {
                     Err(error.into())
                 }
@@ -150,11 +181,6 @@ impl Config {
     }
 }
 
+// TODO: Find some way of testing the Config code
 #[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn config_generation() {
-        Config::new().unwrap();
-    }
-}
+mod tests {}

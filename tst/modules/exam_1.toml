@@ -1,0 +1,19 @@
+# First exam file
+
+[info]
+name = "exam_1"
+authors = [
+    "Ryan Lucas"
+]
+
+[config]
+exam_type = "specific" # Other options are 'general' or 'all'
+exam_order = "in_order"
+specific_order = ["hello_world"] # Order of questions
+
+[config.time]
+hours = 0
+minutes = 20
+seconds = 0
+
+

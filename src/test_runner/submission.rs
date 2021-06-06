@@ -15,7 +15,10 @@ impl SubmissionBuilder {
                 let exec = Exec::build_from_toml(toml)?;
                 Ok(Submission::Exec(exec))
             }
-            Self::Sources => Ok(Submission::Sources(Sources {})),
+            Self::Sources => {
+                let sources = Sources::build_from_toml(toml)?;
+                Ok(Submission::Sources(sources))
+            }
         }
     }
 }
@@ -48,9 +51,22 @@ impl Exec {
 
 #[derive(Debug)]
 pub struct Sources {
-    // source_files: Vec<String>,
-// compiler: String,
-// flags: Vec<String>,
+    sources: Vec<String>,
+    compiler: Option<String>,
+    flags: Option<Vec<String>>,
+}
+
+impl Sources {
+    pub fn build_from_toml(toml: SubmissionToml) -> Result<Self, Error> {
+        match toml.sources {
+            Some(sources) => Ok(Self {
+                sources,
+                compiler: toml.compiler,
+                flags: toml.flags,
+            }),
+            _ => Err("No sources supplied for sources type submission".into()),
+        }
+    }
 }
 
 #[derive(Debug)]

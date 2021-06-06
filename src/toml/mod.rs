@@ -9,6 +9,7 @@ pub struct InfoToml {
 #[derive(Deserialize, Debug)]
 pub struct SubmissionToml {
     pub submission_type: String,
+    pub sources: Option<Vec<String>>,
     pub binary: Option<String>,
     pub compiler: Option<String>,
     pub flags: Option<Vec<String>>,
@@ -17,6 +18,9 @@ pub struct SubmissionToml {
 #[derive(Deserialize, Debug)]
 pub struct TestToml {
     pub test_type: String,
+    pub sources: Option<Vec<String>>,
+    pub compiler: Option<String>,
+    pub flags: Option<Vec<String>>,
     pub binary: Option<String>,
     pub args: Option<Vec<Vec<String>>>,
 }

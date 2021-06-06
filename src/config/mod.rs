@@ -69,16 +69,16 @@ impl From<toml::de::Error> for Error {
 }
 
 #[derive(Deserialize, Debug)]
-struct Directories {
-    submit_directory: String,
-    module_directory: String,
-    exam_directory: String,
-    subject_directory: String,
+pub struct Directories {
+    pub submit_directory: String,
+    pub module_directory: String,
+    pub exam_directory: String,
+    pub subject_directory: String,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    directories: Directories,
+    pub directories: Directories,
 }
 
 impl Config {

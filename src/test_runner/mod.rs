@@ -1,5 +1,4 @@
 use crate::toml::TestToml;
-// use std::path::Path;
 use std::process::{Command, Output};
 use std::str::FromStr;
 
@@ -7,6 +6,7 @@ mod error;
 mod program_output;
 mod submission;
 
+use crate::toml::ModuleToml;
 use error::Error;
 use program_output::ProgramOutput;
 use submission::Submission;
@@ -32,13 +32,39 @@ impl Exec {
 struct UnitTest {}
 
 #[derive(Debug)] // TODO: Implement
-struct Compiled {}
+struct Sources {}
+
+#[derive(Debug)]
+struct CompiledWithAnswer {
+    sources: Vec<String>,
+    compiler: String,
+    args: Vec<Vec<String>>,
+    flags: Option<Vec<String>>,
+} // TODO: Implement
+
+impl CompiledWithAnswer {
+    pub fn build_from_toml(toml: TestToml) -> Result<Self, Error> {
+        match (toml.sources, toml.compiler, toml.args) {
+            (Some(sources), Some(compiler), Some(args)) => Ok(Self {
+                sources,
+                compiler,
+                args,
+                flags: toml.flags,
+            }),
+            _ => Err(
+                "expected-output type module must have sources, compiler, and args arguments"
+                    .into(),
+            ),
+        }
+    }
+}
 
 #[derive(Debug)]
 enum TestBuilder {
     Exec,
     UnitTest,
-    Compiled,
+    Sources,
+    CompiledWithAnswer,
 }
 
 impl TestBuilder {
@@ -49,7 +75,11 @@ impl TestBuilder {
                 Ok(Test::Exec(exec))
             }
             Self::UnitTest => Ok(Test::UnitTest(UnitTest {})),
-            Self::Compiled => Ok(Test::Compiled(Compiled {})),
+            Self::Sources => Ok(Test::Sources(Sources {})),
+            Self::CompiledWithAnswer => {
+                let compile = CompiledWithAnswer::build_from_toml(toml)?;
+                Ok(Test::CompiledWithAnswer(compile))
+            }
         }
     }
 }
@@ -61,7 +91,8 @@ impl FromStr for TestBuilder {
         match input {
             "executable" => Ok(Self::Exec),
             "unit-test" => Ok(Self::UnitTest),
-            "sources" => Ok(Self::Compiled),
+            "sources" => Ok(Self::Sources),
+            "expected-output" => Ok(Self::CompiledWithAnswer),
             invalid => Err(Error::Parse(format!("Invalid test type: {}", invalid))),
         }
     }
@@ -71,7 +102,8 @@ impl FromStr for TestBuilder {
 enum Test {
     Exec(Exec),
     UnitTest(UnitTest),
-    Compiled(Compiled),
+    Sources(Sources),
+    CompiledWithAnswer(CompiledWithAnswer),
 }
 
 impl Test {
@@ -102,7 +134,8 @@ impl Test {
                 output
             }
             Self::UnitTest(_) => Vec::new(),
-            Self::Compiled(_) => Vec::new(),
+            Self::Sources(_) => Vec::new(),
+            Self::CompiledWithAnswer(_) => Vec::new(),
         }
     }
 
@@ -111,26 +144,41 @@ impl Test {
 }
 
 #[derive(Debug)]
-struct TestRunner {
-    module_path: String,
-    submit_path: String,
+pub struct TestRunner {
+    submit_directory: String,
+    module_directory: String,
     submission: Submission,
     test: Test,
 }
 
-use crate::toml::ModuleToml; // TODO remove this at some point
-
-pub fn development_func() -> Result<(), Error> {
-    let toml = std::fs::read_to_string("tst/modules/module_1.toml")?;
-    let toml: ModuleToml = toml::from_str(&toml)?;
-    let tester = Test::generate_from_toml(toml.test)?;
-    let module_path = "tst/modules/".to_owned();
-    println!("{:?}", tester);
-    // let results = tester.run(&module_path);
-    // println!("STDOUT: {:?}", results.0);
-    // println!("STDERR: {:?}", results.1);
-    Ok(())
+impl TestRunner {
+    pub fn new(module_path: &str, submit_path: &str) -> Result<Self, Error> {
+        let toml = std::fs::read_to_string(module_path)?;
+        let toml: ModuleToml = toml::from_str(&toml)?;
+        let test = Test::generate_from_toml(toml.test)?;
+        let submission = Submission::generate_from_toml(toml.submission)?;
+        Ok(Self {
+            submit_directory: submit_path.to_owned(),
+            module_directory: module_path.to_owned(),
+            submission,
+            test,
+        })
+    }
 }
+
+// use crate::toml::ModuleToml; // TODO remove this at some point
+//
+// pub fn development_func() -> Result<(), Error> {
+//     let toml = std::fs::read_to_string("tst/modules/module_1.toml")?;
+//     let toml: ModuleToml = toml::from_str(&toml)?;
+//     let tester = Test::generate_from_toml(toml.test)?;
+//     let module_path = "tst/modules/".to_owned();
+//     println!("{:?}", tester);
+//     // let results = tester.run(&module_path);
+//     // println!("STDOUT: {:?}", results.0);
+//     // println!("STDERR: {:?}", results.1);
+//     Ok(())
+// }
 
 #[cfg(test)]
 mod tests {

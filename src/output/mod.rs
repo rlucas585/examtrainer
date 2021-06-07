@@ -92,7 +92,7 @@ pub fn print_exam_intro(exam: &Exam) {
     println!("(Press Enter to continue...)");
 }
 
-fn print_prompt() {
+pub fn print_prompt() {
     print!("{}> ", "examshell".yellow()); // Maybe make bold?
     let _ = io::stdout().flush();
 }
@@ -112,6 +112,7 @@ pub fn print_help() {
         "  {} - Print the current status to the screen",
         "status".green()
     );
+    println!("  {} - Clear the terminal screen", "clear".green());
     println!("  {} - Show these commands", "help".green());
     println!("  {} - Exit examtrainer", "quit".green());
     print_prompt();

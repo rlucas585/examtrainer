@@ -40,19 +40,22 @@ struct CompiledWithAnswer {
     compiler: String,
     args: Vec<Vec<String>>,
     flags: Option<Vec<String>>,
-} // TODO: Implement
+    expected_output_file: String,
+}
 
 impl CompiledWithAnswer {
     pub fn build_from_toml(toml: TestToml) -> Result<Self, Error> {
-        match (toml.sources, toml.compiler, toml.args) {
-            (Some(sources), Some(compiler), Some(args)) => Ok(Self {
+        match (toml.sources, toml.compiler, toml.args, toml.expected_output) {
+            (Some(sources), Some(compiler), Some(args), Some(output)) => Ok(Self {
                 sources,
                 compiler,
                 args,
                 flags: toml.flags,
+                expected_output_file: output,
             }),
             _ => Err(
-                "expected-output type module must have sources, compiler, and args arguments"
+                "expected-output type module must have sources, compiler, expected_output\
+and args arguments"
                     .into(),
             ),
         }
@@ -98,12 +101,17 @@ impl FromStr for TestBuilder {
     }
 }
 
+pub enum TestResult {
+    Passed,
+    Failed,
+}
+
 #[derive(Debug)]
 enum Test {
     Exec(Exec),
     UnitTest(UnitTest),
     Sources(Sources),
-    CompiledWithAnswer(CompiledWithAnswer),
+    CompiledWithAnswer(CompiledWithAnswer), // Tested against an expected output
 }
 
 impl Test {
@@ -140,7 +148,8 @@ impl Test {
     }
 
     // TODO: Change to function that takes the Submission info
-    pub fn run(&self, submission: &Submission, answer_path: &str, submit_path: &str) {}
+    // pub fn run(&self, submission: &Submission, answer_path: &str, submit_path: &str) -> TestResult {
+    // }
 }
 
 #[derive(Debug)]
@@ -184,6 +193,29 @@ impl TestRunner {
 
     pub fn submit_location(&self) -> &str {
         &self.submit_directory
+    }
+
+    pub fn run(&self) -> Result<TestResult, Error> {
+        match &self.test {
+            Test::Exec(exec) => self.exec_run(),
+            Test::UnitTest(test) => self.unit_test_run(),
+            Test::Sources(sources) => self.sources_run(),
+            Test::CompiledWithAnswer(compile) => self.compiled_run(),
+        }
+    }
+
+    fn exec_run(&self) -> Result<TestResult, Error> {
+        unimplemented!("Need to implement Test::Exec");
+    }
+    fn unit_test_run(&self) -> Result<TestResult, Error> {
+        unimplemented!("Need to implement Test::UnitTest");
+    }
+    fn sources_run(&self) -> Result<TestResult, Error> {
+        unimplemented!("Need to implement Test::Sources");
+    }
+    fn compiled_run(&self) -> Result<TestResult, Error> {
+        // TODO at here
+        unimplemented!("Need to implement Test::CompiledWithAnswer")
     }
 }
 

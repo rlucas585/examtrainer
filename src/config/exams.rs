@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::test_runner::TestRunner;
+use crate::test_runner::{TestResult, TestRunner};
 use crate::toml::ModuleToml;
 use crate::Config;
 use chrono::prelude::*;
@@ -159,9 +159,14 @@ impl ExamType {
         status: &Status,
     ) -> Result<(TestRunner, String), Error> {
         // TODO When the program's structure is better defined, use some sort of database to
-        // perform selection, instead of expensive reads.
-        let modules = std::fs::read_dir(&config.directories.module_directory)?
-            .filter(|elem| elem.as_ref().unwrap().path().is_file())
+        // perform selection, instead of expensive reads. And obviously, tidy.
+        let module_dirs = std::fs::read_dir(&config.directories.module_directory)?
+            .filter(|elem| elem.as_ref().unwrap().path().is_dir());
+        let module_files =
+            module_dirs.flat_map(|dir| std::fs::read_dir(dir.unwrap().path()).unwrap());
+        let modules = module_files
+            .filter(|file| file.as_ref().unwrap().path().extension().is_some())
+            .filter(|file| file.as_ref().unwrap().path().extension().unwrap() == "toml")
             .map(|elem| {
                 toml::from_str::<ModuleToml>(
                     &std::fs::read_to_string(elem.as_ref().unwrap().path()).unwrap(),
@@ -332,9 +337,18 @@ impl Assignment {
         }
     }
 
-    pub fn grade(&mut self) -> AttemptStatus {
-        if let Some(test_runner) = self.test {
-            // TODO: Continue from here, and in test_runner module
+    pub fn grade(&mut self) -> Result<AttemptStatus, Error> {
+        if let Some(test_runner) = self.test.as_ref() {
+            match test_runner.run()? {
+                TestResult::Passed => {
+                    self.status = AttemptStatus::Passed;
+                    Ok(AttemptStatus::Passed)
+                }
+                TestResult::Failed => {
+                    self.status = AttemptStatus::Failed;
+                    Ok(AttemptStatus::Failed)
+                }
+            }
         } else {
             panic!("grade() called on Assignment with no TestRunner");
         }
@@ -445,6 +459,15 @@ impl Status {
     pub fn give_assignment(&mut self, assignment: Assignment) -> Result<(), Error> {
         self.assignments.push(assignment);
         Ok(())
+    }
+
+    pub fn grade_current_assignment(&mut self) -> Result<AttemptStatus, Error> {
+        if self.assignments.len() == 0 {
+            panic!("Calling current_assignment on Status with no assignment");
+        }
+        let index = self.assignments.len() - 1;
+        let current = self.assignments.get_mut(index).unwrap();
+        current.grade()
     }
 
     pub fn start_exam(&mut self, exam: &Exam) {

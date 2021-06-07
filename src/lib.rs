@@ -5,7 +5,7 @@ mod test_runner;
 mod toml;
 
 use crate::output::*;
-use config::exams::{select_exam, Exam, Grade, Status};
+use config::exams::{select_exam, AttemptStatus, Exam, Grade, Status};
 use config::Config;
 use error::Error;
 use std::io::{self, Read, Write};
@@ -58,16 +58,48 @@ fn question_mode(config: &Config, exam: &Exam, status: &mut Status) -> Result<()
         stdin.read_line(&mut buffer)?;
         match &buffer.trim().to_lowercase()[..] {
             "status" => output::print_status(&status),
-            "grademe" => grade_assignment(status)?,
+
+            "grademe" => {
+                let _result = grade_assignment(exam, status)?;
+                // TODO handle result of grading assignment (give new, or end exam)
+            }
+
+            "clear" => {
+                print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
+                io::stdout().flush()?;
+                output::print_prompt();
+            }
+
             "help" => output::print_help(),
-            "quit" => return Ok(()),
+
+            "quit" => {
+                if quit()? == true {
+                    return Ok(());
+                }
+            }
             _ => output::print_unrecognised(&buffer),
         }
         buffer.clear();
     }
 }
 
-fn grade_assignment(status: &mut Status) -> Result<(), Error> {
+fn quit() -> Result<bool, Error> {
+    let mut buffer = String::new();
+    let stdin = io::stdin();
+    buffer.clear();
+    print!("Quit exam session and return to Exam Select? [y/n]: ");
+    io::stdout().flush()?;
+    stdin.read_line(&mut buffer)?;
+    match &buffer.trim().to_lowercase()[..] {
+        "y" => Ok(true),
+        _ => {
+            output::print_prompt();
+            Ok(false)
+        }
+    }
+}
+
+fn grade_assignment(exam: &Exam, status: &mut Status) -> Result<AttemptStatus, Error> {
     let mut buffer = String::new();
     let stdin = io::stdin();
 
@@ -76,10 +108,10 @@ fn grade_assignment(status: &mut Status) -> Result<(), Error> {
     io::stdout().flush()?;
     stdin.read_line(&mut buffer)?;
     match &buffer.trim().to_lowercase()[..] {
-        "y" => {
-            // TODO continue work in the Assignment and test_runner
+        "y" => status.grade_current_assignment(),
+        _ => {
+            output::print_status(&status);
+            Ok(AttemptStatus::Current)
         }
-        _ => output::print_status(&status),
     }
-    Ok(())
 }

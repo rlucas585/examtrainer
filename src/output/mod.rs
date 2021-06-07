@@ -35,11 +35,30 @@ with the same name as the assignment ({}).",
             last.submit_location().red().bold()
         );
         println!("examtrainer does not require you to git push, but remember for real exams!\n");
-        // TODO: Time remaining in exam, and end date
     }
 }
 
+fn print_time(status: &Status) {
+    let time_remaining = status.time_remaining().as_secs();
+    let end = status.end_time();
+    println!(
+        "The end date for this exam is: {}",
+        end.format("%d/%m/%Y %H:%M:%S").to_string().green()
+    );
+    println!(
+        "You have {} remaining",
+        format!(
+            "{}hrs, {}mins and {}sec",
+            time_remaining / 3600,
+            (time_remaining % 3600) / 60,
+            (((time_remaining % 3600) % 60) % 60)
+        )
+        .green()
+    );
+}
+
 pub fn print_status(status: &Status) {
+    println!("");
     print_divider_bar();
     println!(
         "You are currently at level {}",
@@ -48,6 +67,8 @@ pub fn print_status(status: &Status) {
     println!("Your current grade is {}", status.grade);
 
     print_completed_assignments(status);
+
+    print_time(status);
 
     print_divider_bar();
     println!(
@@ -69,7 +90,6 @@ pub fn print_exam_intro(exam: &Exam) {
     );
     println!("Time will begin once you press enter to continue\n");
     println!("(Press Enter to continue...)");
-    std::io::stdin().read(&mut [0]).unwrap();
 }
 
 fn print_prompt() {
@@ -78,9 +98,21 @@ fn print_prompt() {
 }
 
 pub fn print_unrecognised(command: &str) {
-    println!
+    println!("Unrecognised command: '{}'", command.trim());
+    print_help();
 }
 
 pub fn print_help() {
-
+    println!("Possible commands are:");
+    println!(
+        "  {} - Submits and grades the current assignment",
+        "grademe".green()
+    );
+    println!(
+        "  {} - Print the current status to the screen",
+        "status".green()
+    );
+    println!("  {} - Show these commands", "help".green());
+    println!("  {} - Exit examtrainer", "quit".green());
+    print_prompt();
 }

@@ -2,9 +2,11 @@ use crate::error::Error;
 use crate::test_runner::TestRunner;
 use crate::toml::ModuleToml;
 use crate::Config;
+use chrono::prelude::*;
 use colored::*;
 use std::fmt;
 use std::str::FromStr;
+use std::time::{Duration, Instant};
 
 struct PointsSelector {
     indexes: Vec<usize>,
@@ -227,8 +229,24 @@ impl Time {
         }
     }
 
+    pub fn new_from_seconds(mut seconds: u64) -> Self {
+        let hours = seconds / 3600;
+        seconds %= 3600;
+        let minutes = seconds / 60;
+        seconds %= 60;
+        Self {
+            hours: hours as u32,
+            minutes: minutes as u32,
+            seconds: seconds as u32,
+        }
+    }
+
     pub fn build_from_toml(toml: crate::toml::exam::Time) -> Result<Self, Error> {
         Self::new(toml.hours, toml.minutes, toml.seconds)
+    }
+
+    pub fn seconds(&self) -> u32 {
+        3600 * self.hours + 60 * self.minutes + self.seconds
     }
 }
 
@@ -313,6 +331,14 @@ impl Assignment {
             ""
         }
     }
+
+    pub fn grade(&mut self) -> AttemptStatus {
+        if let Some(test_runner) = self.test {
+            // TODO: Continue from here, and in test_runner module
+        } else {
+            panic!("grade() called on Assignment with no TestRunner");
+        }
+    }
 }
 
 impl fmt::Display for Assignment {
@@ -393,6 +419,8 @@ pub struct Status {
     pub attempt: usize,
     pub grade: Grade,
     pub assignments: Vec<Assignment>,
+    start_time: Option<Instant>,
+    end_time: Option<Instant>,
 }
 
 impl Status {
@@ -402,12 +430,60 @@ impl Status {
             attempt: 0,
             grade,
             assignments: Vec::new(),
+            start_time: None,
+            end_time: None,
         }
+    }
+
+    pub fn current_assignment(&self) -> &Assignment {
+        if self.assignments.len() == 0 {
+            panic!("Calling current_assignment on Status with no assignment");
+        }
+        self.assignments.get(self.assignments.len() - 1).unwrap()
     }
 
     pub fn give_assignment(&mut self, assignment: Assignment) -> Result<(), Error> {
         self.assignments.push(assignment);
         Ok(())
+    }
+
+    pub fn start_exam(&mut self, exam: &Exam) {
+        self.start_time = Some(Instant::now());
+        self.end_time =
+            Some(self.start_time.unwrap() + Duration::from_secs(exam.time.seconds() as u64));
+    }
+
+    pub fn time_passed(&self) -> Duration {
+        let now = Instant::now();
+        if let Some(start_time) = self.start_time {
+            now.duration_since(start_time)
+        } else {
+            Duration::from_secs(0)
+        }
+    }
+
+    pub fn time_remaining(&self) -> Duration {
+        if let Some(_) = self.start_time {
+            let end = self.end_time.as_ref().unwrap();
+            let now = Instant::now();
+            if let Some(time_left) = end.checked_duration_since(now) {
+                time_left
+            } else {
+                Duration::from_secs(0)
+            }
+        } else {
+            Duration::from_secs(0)
+        }
+    }
+
+    pub fn end_time(&self) -> DateTime<Utc> {
+        if let Some(_) = self.end_time {
+            let now = Utc::now();
+            let end = Utc::now() + chrono::Duration::from_std(self.time_remaining()).unwrap();
+            end
+        } else {
+            Utc::now()
+        }
     }
 }
 

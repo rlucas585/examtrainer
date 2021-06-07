@@ -12,8 +12,8 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::Read(e) => write!(f, "Error reading Test config file: {}", e),
-            Error::Parse(e) => write!(f, "Error parsing Test config file: {}", e),
+            Error::Read(e) => write!(f, "Error reading config file: {}", e),
+            Error::Parse(e) => write!(f, "Error parsing config file: {}", e),
         }
     }
 }

@@ -2,12 +2,12 @@ use crate::toml::TestToml;
 use std::process::{Command, Output};
 use std::str::FromStr;
 
-mod error;
 mod program_output;
 mod submission;
 
+use crate::config::Config;
+use crate::error::Error;
 use crate::toml::ModuleToml;
-use error::Error;
 use program_output::ProgramOutput;
 use submission::Submission;
 
@@ -163,6 +163,27 @@ impl TestRunner {
             submission,
             test,
         })
+    }
+
+    pub fn build_from_toml(config: &Config, toml: ModuleToml) -> Result<Self, Error> {
+        let test = Test::generate_from_toml(toml.test)?;
+        let submission = Submission::generate_from_toml(toml.submission)?;
+        Ok(Self {
+            submit_directory: format!(
+                "{}/{}/",
+                config.directories.submit_directory, toml.info.name
+            ),
+            module_directory: format!(
+                "{}/{}/",
+                config.directories.module_directory, toml.info.name
+            ),
+            submission,
+            test,
+        })
+    }
+
+    pub fn submit_location(&self) -> &str {
+        &self.submit_directory
     }
 }
 

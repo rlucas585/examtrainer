@@ -15,19 +15,39 @@ fn print_divider_bar() {
 // TODO: Print completed assignment
 fn print_completed_assignments(status: &Status) {
     println!("Assignments:");
+    println!("  Level {}:", format!("{}", status.level).green());
+    for assignment in status.assignments.iter() {
+        println!("{}", assignment);
+    }
+    println!("");
+    if let Some(last) = status.assignments.last() {
+        last.print();
+        println!(
+            "It is assignment {} for level {}",
+            format!("{}", status.attempt).yellow(),
+            format!("{}", status.level).green()
+        );
+        // TODO: Add subject directory line in status printing
+        println!(
+            "You must turn in your files in a {}
+with the same name as the assignment ({}).",
+            "subdirectory of your submit directory".bold(),
+            last.submit_location().red().bold()
+        );
+        println!("examtrainer does not require you to git push, but remember for real exams!\n");
+        // TODO: Time remaining in exam, and end date
+    }
 }
 
-pub fn print_question_intro(exam: &Exam, status: &Status) {
+pub fn print_status(status: &Status) {
     print_divider_bar();
     println!(
         "You are currently at level {}",
         format!("{}", status.level).green()
     );
-    println!(
-        "Your current grade is {}/{}",
-        format!("{}", status.points).green(),
-        exam.config.pass_grade
-    );
+    println!("Your current grade is {}", status.grade);
+
+    print_completed_assignments(status);
 
     print_divider_bar();
     println!(
@@ -41,11 +61,11 @@ command to be graded",
 pub fn print_exam_intro(exam: &Exam) {
     println!(
         "You are registered to begin the exam: {}",
-        exam.info.name.green()
+        exam.name.green()
     );
     println!(
         "You will have {} to complete this exam",
-        format!("{}", exam.config.time).green()
+        format!("{}", exam.time).green()
     );
     println!("Time will begin once you press enter to continue\n");
     println!("(Press Enter to continue...)");
@@ -55,4 +75,12 @@ pub fn print_exam_intro(exam: &Exam) {
 fn print_prompt() {
     print!("{}> ", "examshell".yellow()); // Maybe make bold?
     let _ = io::stdout().flush();
+}
+
+pub fn print_unrecognised(command: &str) {
+    println!
+}
+
+pub fn print_help() {
+
 }

@@ -1,3 +1,4 @@
+pub mod exam;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]

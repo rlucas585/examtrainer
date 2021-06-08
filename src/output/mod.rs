@@ -1,4 +1,5 @@
 use crate::config::exams::Exam;
+use crate::config::Config;
 use crate::Status;
 use colored::*;
 use std::io::{self, Read, Write};
@@ -13,7 +14,7 @@ fn print_divider_bar() {
 }
 
 // TODO: Print completed assignment
-fn print_completed_assignments(status: &Status) {
+fn print_completed_assignments(config: &Config, status: &Status) {
     println!("Assignments:");
     println!("  Level {}:", format!("{}", status.level).green());
     for assignment in status.assignments.iter() {
@@ -27,7 +28,10 @@ fn print_completed_assignments(status: &Status) {
             format!("{}", status.attempt).yellow(),
             format!("{}", status.level).green()
         );
-        // TODO: Add subject directory line in status printing
+        println!(
+            "The subject is located at {}",
+            format!("{}/{}", config.directories.subject_directory.green(), "TBD").green()
+        );
         println!(
             "You must turn in your files in a {}
 with the same name as the assignment ({}).",
@@ -57,7 +61,7 @@ fn print_time(status: &Status) {
     );
 }
 
-pub fn print_status(status: &Status) {
+pub fn print_status(config: &Config, status: &Status) {
     println!("");
     print_divider_bar();
     println!(
@@ -66,7 +70,7 @@ pub fn print_status(status: &Status) {
     );
     println!("Your current grade is {}", status.grade);
 
-    print_completed_assignments(status);
+    print_completed_assignments(config, status);
 
     print_time(status);
 
@@ -116,4 +120,32 @@ pub fn print_help() {
     println!("  {} - Show these commands", "help".green());
     println!("  {} - Exit examtrainer", "quit".green());
     print_prompt();
+}
+
+pub fn print_success(status: &Status) {
+    let success = format!(
+        "{}\n{}\n{}\n",
+        "===========================================",
+        "=                 SUCCESS                 =",
+        "===========================================",
+    )
+    .green();
+    println!("{}", success);
+    println!("You have passed the assignment\n");
+    println!("(Press Enter to continue...)");
+    std::io::stdin().read(&mut [0]).unwrap();
+}
+
+pub fn print_failure(status: &Status) {
+    let failure = format!(
+        "{}\n{}\n{}\n",
+        "===========================================",
+        "=                 FAILURE                 =",
+        "===========================================",
+    )
+    .red();
+    println!("{}", failure);
+    println!("You have failed the assignment\n");
+    println!("(Press Enter to continue...)");
+    std::io::stdin().read(&mut [0]).unwrap();
 }

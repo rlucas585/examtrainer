@@ -19,6 +19,7 @@ pub struct SubmissionToml {
 #[derive(Deserialize, Debug)]
 pub struct TestToml {
     pub test_type: String,
+    pub subject: String,
     pub sources: Option<Vec<String>>,
     pub compiler: Option<String>,
     pub flags: Option<Vec<String>>,

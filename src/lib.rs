@@ -49,7 +49,7 @@ fn question_mode(config: &Config, exam: &Exam, status: &mut Status) -> Result<()
     println!("{:?}", assignment);
     status.give_assignment(assignment)?;
 
-    output::print_status(&status);
+    output::print_status(config, &status);
 
     let mut buffer = String::new();
     let stdin = io::stdin();
@@ -57,11 +57,16 @@ fn question_mode(config: &Config, exam: &Exam, status: &mut Status) -> Result<()
     loop {
         stdin.read_line(&mut buffer)?;
         match &buffer.trim().to_lowercase()[..] {
-            "status" => output::print_status(&status),
+            "status" => output::print_status(config, &status),
 
             "grademe" => {
-                let _result = grade_assignment(exam, status)?;
-                // TODO handle result of grading assignment (give new, or end exam)
+                let result = grade_assignment(exam, status)?;
+                match result {
+                    AttemptStatus::Passed => print_success(status),
+                    AttemptStatus::Failed => print_failure(status),
+                    _ => (),
+                }
+                print_status(config, &status);
             }
 
             "clear" => {
@@ -108,10 +113,10 @@ fn grade_assignment(exam: &Exam, status: &mut Status) -> Result<AttemptStatus, E
     io::stdout().flush()?;
     stdin.read_line(&mut buffer)?;
     match &buffer.trim().to_lowercase()[..] {
-        "y" => status.grade_current_assignment(),
-        _ => {
-            output::print_status(&status);
-            Ok(AttemptStatus::Current)
+        "y" => {
+            println!("Grading...\n");
+            status.grade_current_assignment()
         }
+        _ => Ok(AttemptStatus::Current),
     }
 }

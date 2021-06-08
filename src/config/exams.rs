@@ -201,7 +201,7 @@ impl ExamType {
                     false
                 }
             }
-            Self::General(general) => true,
+            Self::General(_general) => true,
         }
     }
 
@@ -265,6 +265,12 @@ impl fmt::Display for Time {
     }
 }
 
+pub enum ExamStatus {
+    Ongoing,
+    Complete,
+    Endless,
+}
+
 pub struct Exam {
     pub name: String,
     pub time: Time,
@@ -286,6 +292,43 @@ impl Exam {
         let (test_runner, name) = self.exam_type.select_question(config, status)?;
         let points = self.exam_type.get_points(status);
         Ok(Assignment::new(name, test_runner, status, points))
+    }
+
+    pub fn decide_next_assignment(
+        &self,
+        config: &Config,
+        status: &mut Status,
+    ) -> Result<ExamStatus, Error> {
+        let last_assignment_result = status.current_assignment().status;
+        let last_assignment_points = status.current_assignment().points;
+        match last_assignment_result {
+            AttemptStatus::Passed => {
+                status.level += 1;
+                status.attempt = 0;
+                status.grade.add_points(last_assignment_points);
+                if status.grade.complete() {
+                    Ok(ExamStatus::Complete)
+                } else {
+                    let next_assignment = self.select_question(config, status)?;
+                    status.give_assignment(next_assignment)?;
+                    Ok(ExamStatus::Ongoing)
+                }
+            }
+            AttemptStatus::Failed => {
+                status.attempt += 1;
+                if matches!(self.exam_type, ExamType::Specific(_)) {
+                    let points = self.exam_type.get_points(status);
+                    status.retry_assignment(points);
+                } else {
+                    let next_assignment = self.select_question(config, status)?;
+                    status.give_assignment(next_assignment)?;
+                }
+                Ok(ExamStatus::Ongoing)
+            }
+            AttemptStatus::Current => {
+                panic!("Calling decide_next_assignment on ongoing Assignment")
+            }
+        }
     }
 }
 
@@ -309,6 +352,10 @@ impl Assignment {
             level: status.level,
             attempt: status.attempt,
         }
+    }
+
+    pub fn copy_subject(&self) -> Result<(), Error> {
+        // TODO continue here
     }
 
     pub fn set_as_complete(&mut self) {
@@ -335,6 +382,10 @@ impl Assignment {
         } else {
             ""
         }
+    }
+
+    pub fn subject_location(&self) -> &str {
+        // TODO continue here
     }
 
     pub fn grade(&mut self) -> Result<AttemptStatus, Error> {
@@ -374,7 +425,7 @@ pub fn select_exam(exam_dir: &str) -> Result<Exam, Error> {
     ExamBuilder::from_str(&toml.exam_type)?.build(toml)
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum AttemptStatus {
     Current,
     Passed,
@@ -391,26 +442,6 @@ impl fmt::Display for AttemptStatus {
     }
 }
 
-pub struct QuestionAttempt {
-    pub name: String,
-    pub points: u32,
-    pub attempt: u32,
-    pub status: AttemptStatus,
-}
-
-impl fmt::Display for QuestionAttempt {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "    {}, {} for {} potential points ({})",
-            format!("{}", self.attempt).yellow(),
-            format!("{}", self.name).green(),
-            format!("{}", self.points).green(),
-            self.status
-        )
-    }
-}
-
 pub struct Grade {
     inner: u32,
     max: u32,
@@ -419,6 +450,12 @@ pub struct Grade {
 impl Grade {
     pub fn new(max: u32) -> Self {
         Self { inner: 0, max }
+    }
+    pub fn add_points(&mut self, points: u32) {
+        self.inner += points
+    }
+    pub fn complete(&self) -> bool {
+        self.inner >= self.max
     }
 }
 
@@ -454,6 +491,21 @@ impl Status {
             panic!("Calling current_assignment on Status with no assignment");
         }
         self.assignments.get(self.assignments.len() - 1).unwrap()
+    }
+
+    pub fn retry_assignment(&mut self, new_points: u32) {
+        if self.assignments.len() == 0 {
+            panic!("Calling retry_assignment on Status with no assignment");
+        }
+        let index = self.assignments.len() - 1;
+        let previous = self.assignments.get_mut(index).unwrap();
+        let next_assignment = Assignment::new(
+            previous.name.clone(),
+            previous.test.take().unwrap(),
+            &self,
+            new_points,
+        );
+        self.assignments.push(next_assignment);
     }
 
     pub fn give_assignment(&mut self, assignment: Assignment) -> Result<(), Error> {
@@ -501,7 +553,6 @@ impl Status {
 
     pub fn end_time(&self) -> DateTime<Local> {
         if let Some(_) = self.end_time {
-            let now = Local::now();
             let end = Local::now() + chrono::Duration::from_std(self.time_remaining()).unwrap();
             end
         } else {

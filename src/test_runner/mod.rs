@@ -13,6 +13,7 @@ use submission::Submission;
 
 #[derive(Debug)]
 struct Exec {
+    subject: String,
     binary: String,
     args: Vec<Vec<String>>,
 }
@@ -20,7 +21,11 @@ struct Exec {
 impl Exec {
     pub fn build_from_toml(toml: TestToml) -> Result<Self, Error> {
         match (toml.binary, toml.args) {
-            (Some(binary), Some(args)) => Ok(Exec { binary, args }),
+            (Some(binary), Some(args)) => Ok(Exec {
+                subject: toml.subject,
+                binary,
+                args,
+            }),
             (Some(_), None) => Err("No binary specified for executable type module".into()),
             (None, Some(_)) => Err("No arguments specified for executable type module".into()),
             _ => Err("No binary or arguments supplied for executable type module".into()),
@@ -36,6 +41,7 @@ struct Sources {}
 
 #[derive(Debug)]
 struct CompiledWithAnswer {
+    subject: String,
     sources: Vec<String>,
     compiler: String,
     args: Vec<Vec<String>>,
@@ -54,6 +60,7 @@ impl CompiledWithAnswer {
             toml.expected_stderr,
         ) {
             (Some(sources), Some(compiler), Some(args), Some(stdout), Some(stderr)) => Ok(Self {
+                subject: toml.subject,
                 sources,
                 compiler,
                 args,
@@ -164,6 +171,7 @@ impl Test {
 pub struct TestRunner {
     submit_directory: String,
     module_directory: String,
+    subject_directory: String,
     submission: Submission,
     test: Test,
 }
@@ -177,9 +185,14 @@ impl TestRunner {
         Ok(Self {
             submit_directory: submit_path.to_owned(),
             module_directory: module_path.to_owned(),
+            subject_directory: "placeholder".to_owned(),
             submission,
             test,
         })
+    }
+
+    pub fn subject_location() {
+        // TODO continue here
     }
 
     pub fn build_from_toml(config: &Config, toml: ModuleToml) -> Result<Self, Error> {
@@ -193,6 +206,10 @@ impl TestRunner {
             module_directory: format!(
                 "{}/{}/",
                 config.directories.module_directory, toml.info.name
+            ),
+            subject_directory: format!(
+                "{}/{}/",
+                config.directories.subject_directory, toml.info.name
             ),
             submission,
             test,
@@ -222,14 +239,16 @@ impl TestRunner {
         unimplemented!("Need to implement Test::Sources");
     }
     fn compiled_run(&self, compile: &CompiledWithAnswer) -> Result<TestResult, Error> {
+        println!("compilation run!");
         let compilation_result = self.compile_answer_with_submission(compile)?;
-        if let Err(compilation_error) = compilation_result {
+        if let Err(_compilation_error) = compilation_result {
             // TODO write error message to trace in future
+            // eprintln!("error: {}", _compilation_error);
             return Ok(TestResult::Failed);
         }
         let test_binary = compilation_result.unwrap();
-        let run_result = self.run_compiled_answer(compile, test_binary);
-        Ok(TestResult::Passed)
+        let run_result = self.run_compiled_answer(compile, test_binary)?;
+        Ok(run_result)
     }
 
     fn compile_answer_with_submission(
@@ -314,11 +333,21 @@ impl TestRunner {
                 Err(e) => return Err(e.into()),
             }
         }
+        println!("expected output: {}", expected_out);
+        println!("actual output: {}", actual_out);
+        Self::remove_binary(test_binary)?;
         if actual_out == expected_out && actual_err == expected_err {
             Ok(TestResult::Passed)
         } else {
             Ok(TestResult::Failed)
         }
+    }
+
+    fn remove_binary(binary: String) -> Result<Output, Error> {
+        Command::new("rm")
+            .arg(binary)
+            .output()
+            .map_err(|e| e.into())
     }
 }
 

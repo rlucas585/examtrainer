@@ -51,9 +51,9 @@ impl Exec {
 
 #[derive(Debug)]
 pub struct Sources {
-    sources: Vec<String>,
-    compiler: Option<String>,
-    flags: Option<Vec<String>>,
+    pub sources: Vec<String>,
+    pub compiler: Option<String>,
+    pub flags: Option<Vec<String>>,
 }
 
 impl Sources {

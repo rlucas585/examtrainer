@@ -24,7 +24,8 @@ pub struct TestToml {
     pub flags: Option<Vec<String>>,
     pub binary: Option<String>,
     pub args: Option<Vec<Vec<String>>>,
-    pub expected_output: Option<String>,
+    pub expected_stdout: Option<String>,
+    pub expected_stderr: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]

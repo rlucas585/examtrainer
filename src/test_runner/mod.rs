@@ -40,22 +40,30 @@ struct CompiledWithAnswer {
     compiler: String,
     args: Vec<Vec<String>>,
     flags: Option<Vec<String>>,
-    expected_output_file: String,
+    expected_stdout_file: String,
+    expected_stderr_file: String,
 }
 
 impl CompiledWithAnswer {
     pub fn build_from_toml(toml: TestToml) -> Result<Self, Error> {
-        match (toml.sources, toml.compiler, toml.args, toml.expected_output) {
-            (Some(sources), Some(compiler), Some(args), Some(output)) => Ok(Self {
+        match (
+            toml.sources,
+            toml.compiler,
+            toml.args,
+            toml.expected_stdout,
+            toml.expected_stderr,
+        ) {
+            (Some(sources), Some(compiler), Some(args), Some(stdout), Some(stderr)) => Ok(Self {
                 sources,
                 compiler,
                 args,
                 flags: toml.flags,
-                expected_output_file: output,
+                expected_stdout_file: stdout,
+                expected_stderr_file: stderr,
             }),
             _ => Err(
-                "expected-output type module must have sources, compiler, expected_output\
-and args arguments"
+                "expected-output type module must have sources, compiler, expected_stdout,\
+ expected_stderr, and args arguments"
                     .into(),
             ),
         }
@@ -197,25 +205,120 @@ impl TestRunner {
 
     pub fn run(&self) -> Result<TestResult, Error> {
         match &self.test {
-            Test::Exec(exec) => self.exec_run(),
-            Test::UnitTest(test) => self.unit_test_run(),
-            Test::Sources(sources) => self.sources_run(),
-            Test::CompiledWithAnswer(compile) => self.compiled_run(),
+            Test::Exec(exec) => self.exec_run(exec),
+            Test::UnitTest(test) => self.unit_test_run(test),
+            Test::Sources(sources) => self.sources_run(sources),
+            Test::CompiledWithAnswer(compile) => self.compiled_run(compile),
         }
     }
 
-    fn exec_run(&self) -> Result<TestResult, Error> {
+    fn exec_run(&self, exec: &Exec) -> Result<TestResult, Error> {
         unimplemented!("Need to implement Test::Exec");
     }
-    fn unit_test_run(&self) -> Result<TestResult, Error> {
+    fn unit_test_run(&self, unit_test: &UnitTest) -> Result<TestResult, Error> {
         unimplemented!("Need to implement Test::UnitTest");
     }
-    fn sources_run(&self) -> Result<TestResult, Error> {
+    fn sources_run(&self, sources: &Sources) -> Result<TestResult, Error> {
         unimplemented!("Need to implement Test::Sources");
     }
-    fn compiled_run(&self) -> Result<TestResult, Error> {
-        // TODO at here
-        unimplemented!("Need to implement Test::CompiledWithAnswer")
+    fn compiled_run(&self, compile: &CompiledWithAnswer) -> Result<TestResult, Error> {
+        let compilation_result = self.compile_answer_with_submission(compile)?;
+        if let Err(compilation_error) = compilation_result {
+            // TODO write error message to trace in future
+            return Ok(TestResult::Failed);
+        }
+        let test_binary = compilation_result.unwrap();
+        let run_result = self.run_compiled_answer(compile, test_binary);
+        Ok(TestResult::Passed)
+    }
+
+    fn compile_answer_with_submission(
+        &self,
+        test: &CompiledWithAnswer,
+    ) -> Result<Result<String, String>, Error> {
+        match &self.submission {
+            Submission::Exec(_) => {
+                panic!("Compile with sources type test used with binary submission")
+            }
+            Submission::Sources(sub_source) => {
+                let test_binary = String::from("test_binary");
+                // TODO: These verifications should take place when creating TestRunner, rather
+                // than now
+                if let Some(source_compiler) = &sub_source.compiler {
+                    if source_compiler != &test.compiler {
+                        panic!("Compilers different for submission and answer");
+                    }
+                }
+                let mut compile_builder = Command::new(&test.compiler);
+                compile_builder.arg("-o").arg(&test_binary);
+                if let Some(flags) = &sub_source.flags {
+                    for flag in flags {
+                        compile_builder.arg(flag);
+                    }
+                }
+                if let Some(flags) = &test.flags {
+                    for flag in flags {
+                        compile_builder.arg(flag);
+                    }
+                }
+                for source in sub_source.sources.iter() {
+                    compile_builder.arg(format!("{}/{}", self.submit_directory, source));
+                }
+                for source in test.sources.iter() {
+                    compile_builder.arg(format!("{}/{}", self.module_directory, source));
+                }
+                match compile_builder.output() {
+                    Ok(out) => {
+                        if out.status.code().unwrap() != 0 {
+                            Ok(Err(format!(
+                                "Compilation error: {}",
+                                std::str::from_utf8(out.stderr.as_slice()).unwrap()
+                            )))
+                        } else {
+                            Ok(Ok(test_binary))
+                        }
+                    }
+                    Err(e) => Err(e.into()),
+                }
+            }
+        }
+    }
+
+    fn run_compiled_answer(
+        &self,
+        test: &CompiledWithAnswer,
+        test_binary: String,
+    ) -> Result<TestResult, Error> {
+        let expected_out = std::fs::read_to_string(format!(
+            "{}/{}",
+            self.module_directory, test.expected_stdout_file
+        ))?;
+        let expected_err = std::fs::read_to_string(format!(
+            "{}/{}",
+            self.module_directory, test.expected_stderr_file
+        ))?;
+        let mut actual_out = String::new();
+        let mut actual_err = String::new();
+        let exec_path = format!("./{}", test_binary);
+        for args in test.args.iter() {
+            let mut exec = Command::new(&exec_path);
+            for arg in args.iter() {
+                exec.arg(arg);
+            }
+            match exec.output() {
+                Ok(out) => {
+                    let program_output = ProgramOutput::new(out);
+                    actual_out.push_str(&program_output.stdout);
+                    actual_err.push_str(&program_output.stderr);
+                }
+                Err(e) => return Err(e.into()),
+            }
+        }
+        if actual_out == expected_out && actual_err == expected_err {
+            Ok(TestResult::Passed)
+        } else {
+            Ok(TestResult::Failed)
+        }
     }
 }
 

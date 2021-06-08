@@ -499,13 +499,13 @@ impl Status {
         }
     }
 
-    pub fn end_time(&self) -> DateTime<Utc> {
+    pub fn end_time(&self) -> DateTime<Local> {
         if let Some(_) = self.end_time {
-            let now = Utc::now();
-            let end = Utc::now() + chrono::Duration::from_std(self.time_remaining()).unwrap();
+            let now = Local::now();
+            let end = Local::now() + chrono::Duration::from_std(self.time_remaining()).unwrap();
             end
         } else {
-            Utc::now()
+            Local::now()
         }
     }
 }

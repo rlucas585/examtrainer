@@ -191,10 +191,6 @@ impl TestRunner {
         })
     }
 
-    pub fn subject_location() {
-        // TODO continue here
-    }
-
     pub fn build_from_toml(config: &Config, toml: ModuleToml) -> Result<Self, Error> {
         let test = Test::generate_from_toml(toml.test)?;
         let submission = Submission::generate_from_toml(toml.submission)?;
@@ -220,6 +216,20 @@ impl TestRunner {
         &self.submit_directory
     }
 
+    pub fn subject_location(&self) -> &str {
+        &self.subject_directory
+    }
+
+    pub fn subject_source(&self) -> String {
+        let subject_directory = match &self.test {
+            Test::Exec(e) => &e.subject,
+            Test::UnitTest(_) => "", // TODO implement
+            Test::Sources(_) => "",
+            Test::CompiledWithAnswer(c) => &c.subject,
+        };
+        format!("{}{}", self.module_directory, subject_directory)
+    }
+
     pub fn run(&self) -> Result<TestResult, Error> {
         match &self.test {
             Test::Exec(exec) => self.exec_run(exec),
@@ -239,7 +249,6 @@ impl TestRunner {
         unimplemented!("Need to implement Test::Sources");
     }
     fn compiled_run(&self, compile: &CompiledWithAnswer) -> Result<TestResult, Error> {
-        println!("compilation run!");
         let compilation_result = self.compile_answer_with_submission(compile)?;
         if let Err(_compilation_error) = compilation_result {
             // TODO write error message to trace in future
@@ -333,8 +342,6 @@ impl TestRunner {
                 Err(e) => return Err(e.into()),
             }
         }
-        println!("expected output: {}", expected_out);
-        println!("actual output: {}", actual_out);
         Self::remove_binary(test_binary)?;
         if actual_out == expected_out && actual_err == expected_err {
             Ok(TestResult::Passed)

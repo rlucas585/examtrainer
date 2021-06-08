@@ -14,7 +14,7 @@ macro_rules! default_conf {
 submit_directory = \"{0}/rendu\"
 module_directory = \"{0}/.config/examtrainer/modules\"
 exam_directory = \"{0}/.config/examtrainer/exams\"
-subject_directory = \"{0}/.config/examtrainer/subjects\"
+subject_directory = \"{0}/subjects\"
 ",
             $home
         )
@@ -149,6 +149,9 @@ impl Config {
         }
         if Path::new(&self.directories.exam_directory).exists() == false {
             create_directory(&self.directories.exam_directory)?;
+        }
+        if Path::new(&self.directories.subject_directory).exists() == false {
+            create_directory(&self.directories.subject_directory)?;
         }
         Ok(self)
     }

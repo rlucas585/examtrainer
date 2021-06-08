@@ -5,7 +5,7 @@ mod test_runner;
 mod toml;
 
 use crate::output::*;
-use config::exams::{select_exam, AttemptStatus, Exam, Grade, Status};
+use config::exams::{select_exam, AttemptStatus, Exam, ExamStatus, Grade, Status};
 use config::Config;
 use error::Error;
 use std::io::{self, Read, Write};
@@ -46,7 +46,7 @@ fn begin_exam(config: &Config, exam: &Exam) -> Result<(), Error> {
 
 fn question_mode(config: &Config, exam: &Exam, status: &mut Status) -> Result<(), Error> {
     let assignment = exam.select_question(config, status)?;
-    println!("{:?}", assignment);
+    let mut exam_status = ExamStatus::Ongoing;
     status.give_assignment(assignment)?;
 
     output::print_status(config, &status);
@@ -62,9 +62,18 @@ fn question_mode(config: &Config, exam: &Exam, status: &mut Status) -> Result<()
             "grademe" => {
                 let result = grade_assignment(exam, status)?;
                 match result {
-                    AttemptStatus::Passed => print_success(status),
-                    AttemptStatus::Failed => print_failure(status),
+                    AttemptStatus::Passed => {
+                        print_success(status);
+                        exam_status = exam.decide_next_assignment(config, status)?;
+                    }
+                    AttemptStatus::Failed => {
+                        print_failure(status);
+                        exam_status = exam.decide_next_assignment(config, status)?;
+                    }
                     _ => (),
+                }
+                if exam_status == ExamStatus::Complete {
+                    break;
                 }
                 print_status(config, &status);
             }
@@ -86,6 +95,7 @@ fn question_mode(config: &Config, exam: &Exam, status: &mut Status) -> Result<()
         }
         buffer.clear();
     }
+    Ok(())
 }
 
 fn quit() -> Result<bool, Error> {

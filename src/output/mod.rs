@@ -17,7 +17,7 @@ fn print_divider_bar() {
 fn print_completed_assignments(config: &Config, status: &Status) {
     println!("Assignments:");
     println!("  Level {}:", format!("{}", status.level).green());
-    for assignment in status.assignments.iter() {
+    for assignment in status.assignments.iter().rev() {
         println!("{}", assignment);
     }
     println!("");
@@ -30,7 +30,7 @@ fn print_completed_assignments(config: &Config, status: &Status) {
         );
         println!(
             "The subject is located at {}",
-            format!("{}/{}", config.directories.subject_directory.green(), "TBD").green()
+            format!("{}", last.subject_location()).green()
         );
         println!(
             "You must turn in your files in a {}

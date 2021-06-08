@@ -29,12 +29,12 @@ Index of {} supplied but length of points array is {}",
     }
 
     fn get_points(&self, level: usize, attempt: usize) -> u32 {
-        let level = if level > self.indexes.len() {
+        let level = if level >= self.indexes.len() {
             self.indexes.len() - 1
         } else {
             level
         };
-        let attempt = if self.points[level].len() > attempt {
+        let attempt = if attempt >= self.points[level].len() {
             self.points[level].len() - 1
         } else {
             attempt
@@ -265,6 +265,7 @@ impl fmt::Display for Time {
     }
 }
 
+#[derive(PartialEq)]
 pub enum ExamStatus {
     Ongoing,
     Complete,
@@ -355,7 +356,22 @@ impl Assignment {
     }
 
     pub fn copy_subject(&self) -> Result<(), Error> {
-        // TODO continue here
+        if let Some(test) = self.test.as_ref() {
+            let target = test.subject_location();
+            let source = test.subject_source();
+            std::process::Command::new("rm")
+                .arg("-r")
+                .arg(target)
+                .output()?;
+            std::process::Command::new("cp")
+                .arg("-r")
+                .arg(source)
+                .arg(target)
+                .output()?;
+            Ok(())
+        } else {
+            Err("No TestRunner found for Assignment while copying subject directory".into())
+        }
     }
 
     pub fn set_as_complete(&mut self) {
@@ -385,7 +401,11 @@ impl Assignment {
     }
 
     pub fn subject_location(&self) -> &str {
-        // TODO continue here
+        if let Some(test) = self.test.as_ref() {
+            test.subject_location()
+        } else {
+            ""
+        }
     }
 
     pub fn grade(&mut self) -> Result<AttemptStatus, Error> {
@@ -509,6 +529,7 @@ impl Status {
     }
 
     pub fn give_assignment(&mut self, assignment: Assignment) -> Result<(), Error> {
+        assignment.copy_subject()?;
         self.assignments.push(assignment);
         Ok(())
     }

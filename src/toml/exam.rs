@@ -35,4 +35,5 @@ pub struct Exam {
     pub config: ExamConfig,
     pub time: Time,
     pub pass_grade: u32,
+    pub max_grade: u32,
 }

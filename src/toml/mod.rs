@@ -5,6 +5,7 @@ use serde::Deserialize;
 pub struct InfoToml {
     pub name: String,
     pub authors: Option<Vec<String>>,
+    pub difficulty: u32,
 }
 
 #[derive(Deserialize, Debug)]

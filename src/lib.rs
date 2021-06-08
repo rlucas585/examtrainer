@@ -10,7 +10,7 @@ use config::Config;
 use error::Error;
 use std::io::{self, Read, Write};
 
-pub fn run(mut config: Config) -> Result<(), Error> {
+pub fn run(config: Config) -> Result<(), Error> {
     // TODO make some sort of loop here in future, to keep program open.
     create_submission_directory(&config.directories.submit_directory)?;
     let exam = select_exam(&config.directories.exam_directory)?;
@@ -35,7 +35,7 @@ fn create_submission_directory(submit_dir: &str) -> Result<(), Error> {
 
 // TODO: Change to return some sort of Exam Result in future
 fn begin_exam(config: &Config, exam: &Exam) -> Result<(), Error> {
-    let mut status = Status::new(Grade::new(exam.pass_grade));
+    let mut status = Status::new(Grade::new(exam.pass_grade, exam.max_grade));
     print_exam_intro(&exam);
     std::io::stdin().read(&mut [0]).unwrap();
 

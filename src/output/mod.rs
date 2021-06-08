@@ -15,9 +15,16 @@ fn print_divider_bar() {
 
 // TODO: Print completed assignment
 fn print_completed_assignments(config: &Config, status: &Status) {
+    let mut current_level = status.level;
     println!("Assignments:");
     println!("  Level {}:", format!("{}", status.level).green());
     for assignment in status.assignments.iter().rev() {
+        current_level = if assignment.level < current_level {
+            println!("  Level {}:", format!("{}", assignment.level).green());
+            assignment.level
+        } else {
+            current_level
+        };
         println!("{}", assignment);
     }
     println!("");

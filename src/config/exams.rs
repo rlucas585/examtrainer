@@ -34,12 +34,13 @@ Index of {} supplied but length of points array is {}",
         } else {
             level
         };
-        let attempt = if attempt >= self.points[level].len() {
+        let index = self.indexes[level];
+        let attempt = if attempt >= self.points[index].len() {
             self.points[level].len() - 1
         } else {
             attempt
         };
-        self.points[level][attempt]
+        self.points[index][attempt]
     }
 }
 
@@ -119,6 +120,7 @@ impl ExamBuilder {
                     time,
                     ExamType::Specific(specific),
                     toml.pass_grade,
+                    toml.max_grade,
                 ))
             }
             Self::General => {
@@ -129,6 +131,7 @@ impl ExamBuilder {
                     time,
                     ExamType::General(general),
                     toml.pass_grade,
+                    toml.max_grade,
                 ))
             }
         }
@@ -176,6 +179,7 @@ impl ExamType {
             .map(|elem| elem.unwrap())
             .filter(|elem| self.filter_with_examtype(elem, status))
             .collect::<Vec<_>>();
+        println!("{:?}", modules);
 
         if modules.len() == 0 {
             return Err("No modules available".into());
@@ -277,15 +281,17 @@ pub struct Exam {
     pub time: Time,
     exam_type: ExamType,
     pub pass_grade: u32,
+    pub max_grade: u32,
 }
 
 impl Exam {
-    fn new(name: String, time: Time, exam_type: ExamType, pass_grade: u32) -> Self {
+    fn new(name: String, time: Time, exam_type: ExamType, pass_grade: u32, max_grade: u32) -> Self {
         Self {
             name,
             time,
             exam_type,
             pass_grade,
+            max_grade,
         }
     }
 
@@ -339,7 +345,7 @@ pub struct Assignment {
     test: Option<TestRunner>,
     points: u32,
     pub status: AttemptStatus,
-    level: usize,
+    pub level: usize,
     attempt: usize,
 }
 
@@ -440,7 +446,7 @@ impl fmt::Display for Assignment {
 }
 
 pub fn select_exam(exam_dir: &str) -> Result<Exam, Error> {
-    let toml = std::fs::read_to_string(format!("{}/{}", exam_dir, "Exam1.toml"))?;
+    let toml = std::fs::read_to_string(format!("{}/{}", exam_dir, "Exam2.toml"))?;
     let toml: crate::toml::exam::Exam = toml::from_str(&toml)?;
     ExamBuilder::from_str(&toml.exam_type)?.build(toml)
 }
@@ -464,15 +470,23 @@ impl fmt::Display for AttemptStatus {
 
 pub struct Grade {
     inner: u32,
+    pass: u32,
     max: u32,
 }
 
 impl Grade {
-    pub fn new(max: u32) -> Self {
-        Self { inner: 0, max }
+    pub fn new(pass: u32, max: u32) -> Self {
+        Self {
+            inner: 0,
+            pass,
+            max,
+        }
     }
     pub fn add_points(&mut self, points: u32) {
         self.inner += points
+    }
+    pub fn passed(&self) -> bool {
+        self.inner >= self.pass
     }
     pub fn complete(&self) -> bool {
         self.inner >= self.max

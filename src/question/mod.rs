@@ -1,5 +1,6 @@
 pub mod error;
 pub mod question;
+mod submission;
 mod test;
 mod toml;
 

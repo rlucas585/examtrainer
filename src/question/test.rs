@@ -19,10 +19,10 @@
 use crate::question;
 use crate::question::error::MissingKeys;
 use crate::question::QuestionError;
-use crate::utils::ProgramOutput;
+// use crate::utils::ProgramOutput; // TODO needed later
 
 #[derive(Debug)]
-struct Exec {
+pub struct Exec {
     binary: String,
     args: Vec<Vec<String>>,
 }
@@ -37,7 +37,7 @@ impl Exec {
 }
 
 #[derive(Debug)]
-struct UnitTest {
+pub struct UnitTest {
     compiler: String,
     sources: Vec<String>,
 }
@@ -52,7 +52,7 @@ impl UnitTest {
 }
 
 #[derive(Debug)]
-struct Sources {
+pub struct Sources {
     compiler: String,
     sources: Vec<String>,
 }
@@ -67,7 +67,7 @@ impl Sources {
 }
 
 #[derive(Debug)]
-struct CompiledTogether {
+pub struct CompiledTogether {
     compiler: String,
     flags: Option<Vec<String>>,
     sources: Vec<String>,
@@ -101,7 +101,7 @@ impl CompiledTogether {
 }
 
 #[derive(Debug)]
-enum Test {
+pub enum Test {
     Exec(Exec),
     UnitTest(UnitTest),
     Sources(Sources),
@@ -127,7 +127,7 @@ mod tests {
     use super::*;
     use std::fs;
     #[test]
-    fn read_question_toml() -> Result<(), QuestionError> {
+    fn read_test_toml() -> Result<(), QuestionError> {
         let buffer = fs::read_to_string("tst/resources/question_1.toml")?;
         let question_toml: question::toml::Question = toml::from_str(&buffer)?;
         let test_toml: question::toml::Test = question_toml.test;

@@ -1,4 +1,4 @@
-//! # Deserialized Question structs available for easy use with the `toml` crate
+//! Deserialized Question structs available for easy use with the `toml` crate
 //!
 //! Provide a simple parsing target for the `toml` crate when parsing `Question` .toml files. The
 //! resultant structs are a Passive Data Structure (PDS), used as a source to build more

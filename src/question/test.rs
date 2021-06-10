@@ -1,3 +1,21 @@
+//!  A type to compile, run and grade submitted answers
+//!
+//! The `Test` module is centered around the [`Test`] enum. This enum is built using the
+//! [`examtrainer::question::toml::Test`] toml struct, one of the components of a `Question`,
+//! using the [`Test::build_from_toml`] constructor. Different types of tests require different
+//! parameters, the different test types are:
+//! * 'executable' - Expects a user to submit their own sources/executable as an answer, then will
+//! run both the user's executable and the test executable side by side: comparing output (both
+//! stdout and stderr), and generating a trace file if necessary.
+//! * 'unit-test' - Takes source files from a user, and compiles them with Unit Test files supplied
+//! in the Question module. Runs the Unit Test, and places output directly in a trace code if the
+//! Unit Test returns a non-zero value.
+//! * 'sources' - Functions identically to the 'expected' test type, except requires that the
+//! Question module contains sources to be compiled into an executable before testing.
+//! * 'expected-output' - Compiles user code together with test sources to produce an executable.
+//! The executable will then be run, with stdout compared against a
+//! `.out` file, and stderr compared against a `.err` file.
+
 use crate::question;
 use crate::question::error::MissingKeys;
 use crate::question::QuestionError;

@@ -1,5 +1,5 @@
 [package]
-name = "examtrainer_2"
+name = "examtrainer"
 version = "0.1.0"
 authors = ["Ryan Lucas <rlucas@student.codam.nl>"]
 edition = "2018"

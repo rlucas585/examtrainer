@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "examtrainer_2"
+name = "examtrainer"
 version = "0.1.0"
 dependencies = [
  "chrono",

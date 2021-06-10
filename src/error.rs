@@ -29,7 +29,10 @@ impl From<io::Error> for Error {
 
 impl From<ConfigError> for Error {
     fn from(input: ConfigError) -> Error {
-        Error::Config(input)
+        match input {
+            ConfigError::IO(io_e) => Error::IO(io_e),
+            _ => Error::Config(input),
+        }
     }
 }
 

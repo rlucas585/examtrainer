@@ -1,3 +1,6 @@
+use examtrainer::config::Config;
+
 fn main() {
-    println!("Hello, world!");
+    let config = Config::new_from("tst/resources/config_1.toml");
+    println!("{:?}", config);
 }

@@ -1,6 +1,7 @@
 use crate::question;
 use crate::question::error::MissingKeys;
 use crate::question::QuestionError;
+use crate::utils::ProgramOutput;
 
 #[derive(Debug)]
 struct Exec {

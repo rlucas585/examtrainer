@@ -2,6 +2,9 @@
 
 ## About The Project
 
+![examtrainer_screenshot1](images/examtrainer_concept1.png)
+![examtrainer_screenshot2](images/examtrainer_concept2.png)
+
 This project aims to:
 1. Simulate the `examshell` environment from the 42 school, allowing 42
    students (or anyone else who's interested) to practice the exams in

@@ -1,9 +1,11 @@
+pub mod database;
 pub mod error;
 pub mod question;
 mod submission;
 mod test;
 mod toml;
 
+pub use database::QuestionDB;
 pub use error::QuestionError;
 pub use question::*;
 use submission::Submission;

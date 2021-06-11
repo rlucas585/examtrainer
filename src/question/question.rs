@@ -5,6 +5,7 @@ use std::path::Path;
 
 #[derive(Debug)]
 pub struct Question {
+    name: String,
     submit_directory: String,
     question_directory: String,
     subject_directory: String,
@@ -19,14 +20,15 @@ impl Question {
         dir_path: &str,
     ) -> Result<Self, QuestionError> {
         Question::check_type_validity(&toml)?;
-        let submit_directory =
-            format!("{}/{}", config.directories.submit_directory, toml.info.name);
+        let name = toml.info.name;
+        let submit_directory = format!("{}/{}", config.directories.submit_directory, name);
         let question_directory = dir_path.to_string();
         let subject_directory =
             Self::validate_subject_directory(&question_directory, &toml.test.subject)?;
         let test: Test = Test::build_from_toml(toml.test, dir_path)?;
         let submission: Submission = Submission::build_from_toml(toml.submission)?;
         Ok(Self {
+            name,
             submit_directory,
             question_directory,
             subject_directory,
@@ -37,7 +39,7 @@ impl Question {
 
     pub fn build_from_dir_entry(
         config: &Config,
-        question_dir: DirEntry,
+        question_dir: &DirEntry,
     ) -> Result<Self, QuestionError> {
         let dir_path = question_dir.path();
         let mut question_opt = None;
@@ -58,6 +60,10 @@ impl Question {
             }
         }
         question_opt.ok_or(QuestionError::NoConfig)
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     fn validate_subject_directory(
@@ -140,6 +146,40 @@ mod tests {
         let toml: question::toml::Question =
             toml::from_str(&buffer).map_err(|e| Error::Question(e.into()))?;
         let question_res = Question::build_from_toml(&config, toml, &dir_path);
+        assert!(question_res.is_ok());
+        let question = question_res?;
+        assert_eq!(question.name(), "hello_world");
+        assert_eq!(
+            question.submit_directory,
+            "tst/resources/rendu_test/hello_world"
+        );
+        assert_eq!(
+            question.question_directory,
+            "tst/resources/questions/hello_world"
+        );
+        assert_eq!(
+            question.subject_directory,
+            "tst/resources/questions/hello_world/hello_world.subject"
+        );
+        assert!(matches!(question.test, Test::CompiledTogether(_)));
+        Ok(())
+    }
+
+    #[test]
+    fn build_from_dir_entry() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config1.toml")?;
+        let question_dirs = std::fs::read_dir(&config.directories.question_directory)?;
+        let mut dir_entry_opt: Option<DirEntry> = None;
+        for dir in question_dirs.into_iter() {
+            if let Ok(dir) = dir {
+                if dir.path().to_str().unwrap().contains("hello_world") {
+                    dir_entry_opt = Some(dir);
+                }
+            }
+        }
+        assert!(dir_entry_opt.is_some());
+        let dir_entry = dir_entry_opt.unwrap();
+        let question_res = Question::build_from_dir_entry(&config, &dir_entry);
         assert!(question_res.is_ok());
         let question = question_res?;
         assert_eq!(

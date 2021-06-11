@@ -66,8 +66,3 @@ mod tests {
         );
     }
 }
-// TODO Use this for Config Documentation
-
-// A valid configuration file must contain the following:
-// * `submit_directory` - The directory to submit exercises when sitting an exam
-// * `module_directory `

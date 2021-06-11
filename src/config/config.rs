@@ -1,3 +1,20 @@
+//! Configuration settings for [`examtrainer`]
+//
+//! A valid configuration file must contain the following:
+//! * `submit_directory` - The directory to submit exercises when sitting an exam
+//! * `question_directory` - Directory where questions are located
+//! * `exam_directory` - Directory where exams are located
+//! * `subject_directory` - Directory where the subjects of assignments will be sent
+//!
+//! Below is a valid config file:
+//! ```toml
+//! [directories]
+//! submit_directory = "/home/rlucas/rendu"
+//! question_directory = "/home/rlucas/.config/examtrainer/questions"
+//! exam_directory = "/home/rlucas/.config/examtrainer/exams"
+//! subject_directory = "/home/rlucas/subjects"
+//! ```
+
 use super::ConfigError;
 use home::home_dir;
 use serde::Deserialize;
@@ -28,10 +45,18 @@ pub struct Config {
 }
 
 impl Config {
+    /// Parse config file to create a [`Config`] for `examtrainer`
+    ///
+    /// [`Config::new`] will search for a config.toml file inside of `$HOME/.config/examtrainer/`.
+    /// If it is not found, or either of the two required directories within (exams and questions)
+    /// are not found, the user will be prompted to create them.
+    ///
+    /// This function returns either `Ok([`Config`])`, or `Err([`ConfigError`])`.
     pub fn new() -> Result<Self, ConfigError> {
         Self::new_internal(None)
     }
 
+    /// Parse config file given as argument to create a [`Config`]
     pub fn new_from(config_path: &str) -> Result<Self, ConfigError> {
         Self::new_internal(Some(config_path))
     }

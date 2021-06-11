@@ -14,6 +14,7 @@ pub enum QuestionError {
     MissingKey(MissingKeys),
     MultipleConfigs,
     NoConfig,
+    DuplicateQuestion(String),
     IO(io::Error),
 }
 
@@ -36,6 +37,11 @@ impl fmt::Display for QuestionError {
                 write!(f, "Multiple .toml files were found in Question directory")
             }
             Self::NoConfig => write!(f, "No config file found in Question directory"),
+            Self::DuplicateQuestion(name) => write!(
+                f,
+                "The question {} appeared twice, second instance ignored",
+                name
+            ),
             Self::IO(io_e) => write!(f, "IO Error: {}", io_e),
         }
     }

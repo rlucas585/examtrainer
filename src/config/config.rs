@@ -15,16 +15,16 @@ macro_rules! check_if_dir_exists {
 }
 
 #[derive(Deserialize, Debug)]
-struct Directories {
-    submit_directory: String,
-    question_directory: String,
-    exam_directory: String,
-    subject_directory: String,
+pub struct Directories {
+    pub submit_directory: String,
+    pub question_directory: String,
+    pub exam_directory: String,
+    pub subject_directory: String,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    directories: Directories,
+    pub directories: Directories,
 }
 
 impl Config {
@@ -141,6 +141,25 @@ mod tests {
         assert_eq!(
             config.directories.subject_directory,
             "/home/rlucas/subjects"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn initialize_test_config() -> Result<(), ConfigError> {
+        let config = Config::new_from("tst/resources/test_config1.toml")?;
+        assert_eq!(
+            config.directories.submit_directory,
+            "tst/resources/rendu_test"
+        );
+        assert_eq!(
+            config.directories.question_directory,
+            "tst/resources/questions"
+        );
+        assert_eq!(config.directories.exam_directory, "tst/resources/exams");
+        assert_eq!(
+            config.directories.subject_directory,
+            "tst/resources/subjects"
         );
         Ok(())
     }

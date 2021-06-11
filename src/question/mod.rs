@@ -6,3 +6,5 @@ mod toml;
 
 pub use error::QuestionError;
 pub use question::*;
+use submission::Submission;
+use test::Test;

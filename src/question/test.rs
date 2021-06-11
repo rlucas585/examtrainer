@@ -18,7 +18,8 @@
 
 use crate::question;
 use crate::question::error::MissingKeys;
-use crate::question::QuestionError;
+use crate::question::{QuestionError, Submission};
+use std::path::Path;
 // use crate::utils::ProgramOutput; // TODO needed later
 
 #[derive(Debug)]
@@ -28,9 +29,12 @@ pub struct Exec {
 }
 
 impl Exec {
-    fn build_from_toml(toml: question::toml::Test) -> Result<Self, MissingKeys> {
+    fn build_from_toml(toml: question::toml::Test, dir_path: &str) -> Result<Self, MissingKeys> {
         match (toml.binary, toml.args) {
-            (Some(binary), Some(args)) => Ok(Self { binary, args }),
+            (Some(binary), Some(args)) => Ok(Self {
+                binary: format!("{}/{}", dir_path, binary),
+                args,
+            }),
             _ => Err(MissingKeys::Exec),
         }
     }
@@ -43,9 +47,15 @@ pub struct UnitTest {
 }
 
 impl UnitTest {
-    fn build_from_toml(toml: question::toml::Test) -> Result<Self, MissingKeys> {
+    fn build_from_toml(toml: question::toml::Test, dir_path: &str) -> Result<Self, MissingKeys> {
         match (toml.compiler, toml.sources) {
-            (Some(compiler), Some(sources)) => Ok(Self { compiler, sources }),
+            (Some(compiler), Some(sources)) => Ok(Self {
+                compiler,
+                sources: sources
+                    .into_iter()
+                    .map(|elem| format!("{}/{}", dir_path, elem))
+                    .collect(),
+            }),
             _ => Err(MissingKeys::UnitTest),
         }
     }
@@ -58,9 +68,15 @@ pub struct Sources {
 }
 
 impl Sources {
-    fn build_from_toml(toml: question::toml::Test) -> Result<Self, MissingKeys> {
+    fn build_from_toml(toml: question::toml::Test, dir_path: &str) -> Result<Self, MissingKeys> {
         match (toml.compiler, toml.sources) {
-            (Some(compiler), Some(sources)) => Ok(Self { compiler, sources }),
+            (Some(compiler), Some(sources)) => Ok(Self {
+                compiler,
+                sources: sources
+                    .into_iter()
+                    .map(|elem| format!("{}/{}", dir_path, elem))
+                    .collect(),
+            }),
             _ => Err(MissingKeys::Sources),
         }
     }
@@ -77,7 +93,7 @@ pub struct CompiledTogether {
 }
 
 impl CompiledTogether {
-    fn build_from_toml(toml: question::toml::Test) -> Result<Self, MissingKeys> {
+    fn build_from_toml(toml: question::toml::Test, dir_path: &str) -> Result<Self, QuestionError> {
         match (
             toml.compiler,
             toml.sources,
@@ -86,6 +102,9 @@ impl CompiledTogether {
             toml.args,
         ) {
             (Some(compiler), Some(sources), Some(stdout_file), Some(stderr_file), Some(args)) => {
+                let stdout_file = format!("{}/{}", dir_path, stdout_file);
+                let stderr_file = format!("{}/{}", dir_path, stderr_file);
+                Self::validate_output_files(&stdout_file, &stderr_file)?;
                 Ok(Self {
                     compiler,
                     flags: toml.flags,
@@ -95,7 +114,21 @@ impl CompiledTogether {
                     args,
                 })
             }
-            _ => Err(MissingKeys::CompiledTogether),
+            _ => Err(MissingKeys::CompiledTogether.into()),
+        }
+    }
+
+    fn validate_output_files(out_path: &str, err_path: &str) -> Result<(), QuestionError> {
+        let out_path = Path::new(&out_path);
+        let err_path = Path::new(&err_path);
+        match (
+            out_path.exists() && out_path.is_file(),
+            err_path.exists() && out_path.is_file(),
+        ) {
+            (true, true) => Ok(()),
+            (true, false) => Err(QuestionError::NoStderr),
+            (false, true) => Err(QuestionError::NoStdout),
+            _ => Err(QuestionError::NoStdout),
         }
     }
 }
@@ -109,13 +142,16 @@ pub enum Test {
 }
 
 impl Test {
-    pub fn build_from_toml(toml: question::toml::Test) -> Result<Self, QuestionError> {
+    pub fn build_from_toml(
+        toml: question::toml::Test,
+        dir_path: &str,
+    ) -> Result<Self, QuestionError> {
         match &toml.test_type[..] {
-            "executable" => Ok(Self::Exec(Exec::build_from_toml(toml)?)),
-            "unit-test" => Ok(Self::UnitTest(UnitTest::build_from_toml(toml)?)),
-            "sources" => Ok(Self::Sources(Sources::build_from_toml(toml)?)),
+            "executable" => Ok(Self::Exec(Exec::build_from_toml(toml, dir_path)?)),
+            "unit-test" => Ok(Self::UnitTest(UnitTest::build_from_toml(toml, dir_path)?)),
+            "sources" => Ok(Self::Sources(Sources::build_from_toml(toml, dir_path)?)),
             "expected-output" => Ok(Self::CompiledTogether(CompiledTogether::build_from_toml(
-                toml,
+                toml, dir_path,
             )?)),
             invalid => Err(QuestionError::InvalidTestType(invalid.into())),
         }
@@ -128,10 +164,11 @@ mod tests {
     use std::fs;
     #[test]
     fn read_test_toml() -> Result<(), QuestionError> {
-        let buffer = fs::read_to_string("tst/resources/question_1.toml")?;
+        let buffer = fs::read_to_string("tst/resources/questions/hello_world/hello_world.toml")?;
+        let dir_path = String::from("tst/resources/questions/hello_world");
         let question_toml: question::toml::Question = toml::from_str(&buffer)?;
         let test_toml: question::toml::Test = question_toml.test;
-        let test: Test = Test::build_from_toml(test_toml)?;
+        let test: Test = Test::build_from_toml(test_toml, &dir_path)?;
         assert!(matches!(test, Test::CompiledTogether(_)));
         match test {
             Test::CompiledTogether(test) => {
@@ -141,8 +178,14 @@ mod tests {
                     Some(vec!("-Wall".into(), "-Wextra".into(), "-Werror".into()))
                 );
                 assert_eq!(test.sources, vec!("main.c"));
-                assert_eq!(test.stdout_file, "hello_world.out");
-                assert_eq!(test.stderr_file, "hello_world.err");
+                assert_eq!(
+                    test.stdout_file,
+                    "tst/resources/questions/hello_world/hello_world.out"
+                );
+                assert_eq!(
+                    test.stderr_file,
+                    "tst/resources/questions/hello_world/hello_world.err"
+                );
             }
             _ => (),
         }

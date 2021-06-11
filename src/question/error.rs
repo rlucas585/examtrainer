@@ -8,6 +8,9 @@ pub enum QuestionError {
     InvalidSubmissionType(String),
     InvalidTestFile(toml::de::Error),
     MismatchedQuestion(String, String), // TODO: use Enum instead of String in future
+    NoSubject,
+    NoStdout,
+    NoStderr,
     MissingKey(MissingKeys),
     IO(io::Error),
 }
@@ -23,6 +26,9 @@ impl fmt::Display for QuestionError {
                 "Submission type {} cannot be used together with Question type {}",
                 sub, test
             ),
+            Self::NoSubject => write!(f, "Subject directory not found in Question"),
+            Self::NoStdout => write!(f, "Expected Stdout file does not exist"),
+            Self::NoStderr => write!(f, "Expected Stderr file does not exist"),
             Self::MissingKey(e) => write!(f, "Missing key: {}", e),
             Self::IO(io_e) => write!(f, "IO Error: {}", io_e),
         }

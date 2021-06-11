@@ -1,6 +1,6 @@
 use crate::config::Config;
-// use crate::question::*;
 use crate::question::{self, QuestionError, Submission, Test};
+use std::fs::DirEntry;
 use std::path::Path;
 
 #[derive(Debug)]
@@ -33,6 +33,31 @@ impl Question {
             submission,
             test,
         })
+    }
+
+    pub fn build_from_dir_entry(
+        config: &Config,
+        question_dir: DirEntry,
+    ) -> Result<Self, QuestionError> {
+        let dir_path = question_dir.path();
+        let mut question_opt = None;
+        let files = std::fs::read_dir(&dir_path)?;
+        for file in files {
+            let file = file?;
+            if let Some(extension) = file.path().extension() {
+                if extension == "toml" {
+                    if question_opt.is_some() {
+                        return Err(QuestionError::MultipleConfigs);
+                    }
+                    let buffer = std::fs::read_to_string(file.path())?;
+                    let toml: question::toml::Question = toml::from_str(&buffer)?;
+                    let question =
+                        Question::build_from_toml(&config, toml, &dir_path.to_str().unwrap())?;
+                    question_opt = Some(question);
+                }
+            }
+        }
+        question_opt.ok_or(QuestionError::NoConfig)
     }
 
     fn validate_subject_directory(
@@ -88,7 +113,7 @@ mod tests {
         let config = Config::new_from("tst/resources/test_config1.toml")?;
         let dir_path = format!(
             "{}/{}",
-            config.directories.question_directory, "no_sub_question/"
+            config.directories.question_directory, "no_sub_question"
         );
         let file = format!("{}/{}", dir_path, "hello_world.toml");
         let buffer = fs::read_to_string(file)?;
@@ -100,6 +125,36 @@ mod tests {
             question_res.unwrap_err(),
             QuestionError::NoSubject
         ));
+        Ok(())
+    }
+
+    #[test]
+    fn build_valid_question() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config1.toml")?;
+        let dir_path = format!(
+            "{}/{}",
+            config.directories.question_directory, "hello_world"
+        );
+        let file = format!("{}/{}", dir_path, "hello_world.toml");
+        let buffer = fs::read_to_string(file)?;
+        let toml: question::toml::Question =
+            toml::from_str(&buffer).map_err(|e| Error::Question(e.into()))?;
+        let question_res = Question::build_from_toml(&config, toml, &dir_path);
+        assert!(question_res.is_ok());
+        let question = question_res?;
+        assert_eq!(
+            question.submit_directory,
+            "tst/resources/rendu_test/hello_world"
+        );
+        assert_eq!(
+            question.question_directory,
+            "tst/resources/questions/hello_world"
+        );
+        assert_eq!(
+            question.subject_directory,
+            "tst/resources/questions/hello_world/hello_world.subject"
+        );
+        assert!(matches!(question.test, Test::CompiledTogether(_)));
         Ok(())
     }
 }

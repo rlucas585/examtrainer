@@ -12,6 +12,8 @@ pub enum QuestionError {
     NoStdout,
     NoStderr,
     MissingKey(MissingKeys),
+    MultipleConfigs,
+    NoConfig,
     IO(io::Error),
 }
 
@@ -30,6 +32,10 @@ impl fmt::Display for QuestionError {
             Self::NoStdout => write!(f, "Expected Stdout file does not exist"),
             Self::NoStderr => write!(f, "Expected Stderr file does not exist"),
             Self::MissingKey(e) => write!(f, "Missing key: {}", e),
+            Self::MultipleConfigs => {
+                write!(f, "Multiple .toml files were found in Question directory")
+            }
+            Self::NoConfig => write!(f, "No config file found in Question directory"),
             Self::IO(io_e) => write!(f, "IO Error: {}", io_e),
         }
     }

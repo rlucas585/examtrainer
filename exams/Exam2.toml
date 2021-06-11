@@ -1,0 +1,24 @@
+# Exam2
+
+exam_type = "specific" # Other options are 'general' or 'all'
+pass_grade = 50
+max_grade = 100
+
+[info]
+name = "exam_2"
+authors = [
+    "Ryan Lucas"
+]
+
+[config]
+exam_order = "in_order"
+specific_order = ["hello_world", "aff_a"] # Order of questions
+point_indexes = [0, 0] # Which index to use for points for question
+points = [ # Different point options -> Value can change depending on attempt no
+    [50, 30, 10]
+]
+
+[time]
+hours = 0
+minutes = 20
+seconds = 0

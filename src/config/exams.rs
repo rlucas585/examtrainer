@@ -179,7 +179,6 @@ impl ExamType {
             .map(|elem| elem.unwrap())
             .filter(|elem| self.filter_with_examtype(elem, status))
             .collect::<Vec<_>>();
-        println!("{:?}", modules);
 
         if modules.len() == 0 {
             return Err("No modules available".into());

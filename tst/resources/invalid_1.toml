@@ -1,0 +1,24 @@
+[info]
+name = "hello_world"
+authors = [
+    "Ryan Lucas"
+]
+difficulty = 2 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["hello_world.c"]
+
+[test]
+test_type = "expected-output"
+sources = ["main.c"]
+subject = "hello_world.subject"
+expected_stdout = "hello_world.out"
+expected_stderr = "hello_world.err"
+compiler = "gcc"
+flags = ["-Wall", "-Wextra", "-Werror"]
+args = [
+    [],
+    ["Ryan", "Lucas"] # Error is here, in case it's hard to spot
+    ["did", "you", "know", "shinigami", "love", "apples"]
+]

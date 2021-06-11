@@ -1,0 +1,5 @@
+[directories]
+submit_directory = "/home/rlucas/rendu"
+question_directory = "/home/rlucas/.config/examtrainer/questions"
+exam_directory = "/home/rlucas/.config/examtrainer/exams"
+subject_directory = "/home/rlucas/subjects"

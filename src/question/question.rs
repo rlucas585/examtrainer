@@ -6,6 +6,7 @@ use std::path::Path;
 #[derive(Debug)]
 pub struct Question {
     name: String,
+    difficulty: u32,
     submit_directory: String,
     question_directory: String,
     subject_directory: String,
@@ -29,6 +30,7 @@ impl Question {
         let submission: Submission = Submission::build_from_toml(toml.submission)?;
         Ok(Self {
             name,
+            difficulty: toml.info.difficulty,
             submit_directory,
             question_directory,
             subject_directory,
@@ -64,6 +66,10 @@ impl Question {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn difficulty(&self) -> u32 {
+        self.difficulty
     }
 
     fn validate_subject_directory(
@@ -172,7 +178,7 @@ mod tests {
         let mut dir_entry_opt: Option<DirEntry> = None;
         for dir in question_dirs.into_iter() {
             if let Ok(dir) = dir {
-                if dir.path().to_str().unwrap().contains("hello_world") {
+                if dir_entry_opt.is_none() && dir.path().to_str().unwrap().contains("hello_world") {
                     dir_entry_opt = Some(dir);
                 }
             }

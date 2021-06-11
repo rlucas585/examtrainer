@@ -39,6 +39,10 @@ impl QuestionDB {
         }
         Ok(Self { questions })
     }
+
+    pub fn get_question_by_name(&self, name: &str) -> Option<&Question> {
+        self.questions.get(name)
+    }
 }
 
 fn insert_new_question(questions: &mut HashMap<String, Question>, question: Question) {
@@ -78,7 +82,17 @@ mod tests {
     fn generate_questions() -> Result<(), Error> {
         let config = Config::new_from("tst/resources/test_config1.toml")?;
         let question_database = QuestionDB::new(&config)?;
-        println!("{:?}", question_database);
+        Ok(())
+    }
+
+    #[test]
+    fn get_question_by_name() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config1.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let question = question_database.get_question_by_name("hello_world");
+        assert!(question.is_some());
+        let question = question.unwrap();
+        assert_eq!(question.difficulty(), 2);
         Ok(())
     }
 }

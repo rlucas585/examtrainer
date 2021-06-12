@@ -1,6 +1,7 @@
 use super::{Question, QuestionError};
 use crate::config::Config;
 use crate::error::Error;
+use crate::utils::Range;
 use colored::*;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
@@ -42,6 +43,16 @@ impl QuestionDB {
     pub fn get_question_by_name(&self, name: &str) -> Option<&Question> {
         self.questions.get(name)
     }
+
+    pub fn get_questions_by_difficulty_range(&self, range: &Range) -> Vec<&Question> {
+        let mut out = Vec::new();
+        for (_, question) in self.questions.iter() {
+            if question.has_difficulty_in_range(range) {
+                out.push(question);
+            }
+        }
+        out
+    }
 }
 
 fn insert_new_question(questions: &mut HashMap<String, Question>, question: Question) {
@@ -80,8 +91,7 @@ mod tests {
     #[test]
     fn generate_questions() -> Result<(), Error> {
         let config = Config::new_from("tst/resources/test_config1.toml")?;
-        let question_database = QuestionDB::new(&config)?;
-        println!("{:?}", question_database);
+        let _question_database = QuestionDB::new(&config)?;
         Ok(())
     }
 
@@ -93,6 +103,23 @@ mod tests {
         assert!(question.is_some());
         let question = question.unwrap();
         assert_eq!(question.difficulty(), 2);
+        Ok(())
+    }
+
+    #[test]
+    fn get_questions_by_difficulty() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config1.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let range = Range::new(2, 4)?;
+        let viable_questions = question_database.get_questions_by_difficulty_range(&range);
+        assert!(viable_questions.iter().any(|&q| q.name() == "hello_world"));
+        assert!(viable_questions.iter().any(|&q| q.name() == "aff_a"));
+        assert!(!viable_questions.iter().any(|&q| q.name() == "first_word"));
+        let range = Range::new(4, 8)?;
+        let viable_questions = question_database.get_questions_by_difficulty_range(&range);
+        assert!(!viable_questions.iter().any(|&q| q.name() == "hello_world"));
+        assert!(viable_questions.iter().any(|&q| q.name() == "aff_a"));
+        assert!(viable_questions.iter().any(|&q| q.name() == "first_word"));
         Ok(())
     }
 }

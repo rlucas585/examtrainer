@@ -1,0 +1,32 @@
+[info]
+name = "first_word"
+authors = [
+    "Ryan Lucas"
+]
+difficulty = 7 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["aff_a.c"]
+
+[test]
+test_type = "expected-output"
+sources = []
+subject = "first_word.subject"
+expected_stdout = "first_word.out"
+expected_stderr = "first_word.err"
+compiler = "gcc"
+flags = ["-Wall", "-Wextra", "-Werror"]
+args = [
+    ["sentences dont need the first letter, they're fine without"],
+    ["Ryan"],
+    ["      "],
+    ["abc"],
+    ["dub0 O a POIL"],
+    ["zz sent le poney"],
+    [],
+    ["a", "b"],
+    ["   lorem,ipsum"],
+    ["	  tabs	count as 	whitespace	too!"],
+]
+

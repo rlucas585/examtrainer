@@ -95,6 +95,16 @@ impl ProgramOutput {
     }
 }
 
+pub fn join_outputs(outputs: Vec<ProgramOutput>) -> (String, String) {
+    let mut stdout = String::new();
+    let mut stderr = String::new();
+    for output in outputs.into_iter() {
+        stdout += output.stdout();
+        stderr += output.stderr();
+    }
+    (stdout, stderr)
+}
+
 impl fmt::Display for ProgramOutput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Exit Code: {}", self.status)?;

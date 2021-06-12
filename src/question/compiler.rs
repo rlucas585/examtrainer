@@ -10,15 +10,6 @@ pub enum CompileResult {
     Err(TestError),
 }
 
-impl CompileResult {
-    pub fn unwrap(self) -> String {
-        match self {
-            Self::Ok(s) => s,
-            Self::Err(_) => panic!("Unwrap called on CompileResult::Err"),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct Compiler<'a> {
     compiler: &'a str,
@@ -98,7 +89,10 @@ mod tests {
         }
         let compile_result = compiler.compile()?;
         assert!(matches!(compile_result, CompileResult::Ok(_)));
-        let binary = format!("./{}", compile_result.unwrap());
+        let binary = match compile_result {
+            CompileResult::Ok(binary) => format!("./{}", binary),
+            CompileResult::Err(e) => panic!("Compilation in test should succeed, but: {}", e),
+        };
         let output = Command::new(&binary).output()?;
         let output = ProgramOutput::new(output);
         assert_eq!(output.code(), 0);

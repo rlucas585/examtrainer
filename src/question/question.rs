@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::question::error::MissingKeys;
-use crate::question::test::{TestError, TestResult};
+use crate::question::test::TestResult;
 use crate::question::{self, QuestionError, Submission, Test};
 use crate::utils::Range;
 use std::fs::DirEntry;
@@ -149,6 +149,7 @@ impl Question {
 mod tests {
     use super::*;
     use crate::error::Error;
+    use crate::question::test::TestError;
     use crate::question::QuestionDB;
     use std::fs;
     #[test]

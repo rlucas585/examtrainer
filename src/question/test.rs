@@ -75,7 +75,7 @@ impl Exec {
         dirs: &QuestionDirs,
     ) -> Result<TestResult, QuestionError> {
         match submission {
-            Submission::Exec(exec) => self.run_with_binary(exec.name(), dirs),
+            Submission::Exec(exec) => self.run_with_binary(exec.name()),
             Submission::Sources(sources) => {
                 let mut compiler = Compiler::new(sources.compiler());
                 for source in sources.sources().iter() {
@@ -94,16 +94,12 @@ impl Exec {
                 // Don't think this is necessary, temporary binary will be created in current
                 // directory before being deleted
                 let binary = format!("./{}", binary);
-                self.run_with_binary(&binary, dirs)
+                self.run_with_binary(&binary)
             }
         }
     }
 
-    fn run_with_binary(
-        &self,
-        binary: &str,
-        dirs: &QuestionDirs,
-    ) -> Result<TestResult, QuestionError> {
+    fn run_with_binary(&self, binary: &str) -> Result<TestResult, QuestionError> {
         let mut trace = Trace::new();
         for args in self.args.iter() {
             let test_output = run_binary_with_args(&self.binary, args)?;

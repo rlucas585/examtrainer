@@ -1,0 +1,23 @@
+[info]
+name = "Z_failed_countdown"
+authors = [
+    "Ryan Lucas"
+]
+difficulty = 1 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["ft_countdown.c"]
+compiler = "gcc"
+
+[test]
+test_type = "executable"
+binary = "ft_countdown"
+subject = "ft_countdown.subject"
+expected_stdout = "ft_countdown.out"
+expected_stderr = "ft_countdown.err"
+args = [
+    [],
+    ["I'll", "be", "ignored"],
+]
+

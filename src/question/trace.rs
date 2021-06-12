@@ -89,16 +89,16 @@ mod tests {
         assert_eq!(
             trace.to_string(),
             format!(
-                "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n",
-                "Failure with args: i_dont_exist.txt, -e, ",
-                "Expected Output:",
-                "Exit Code: 1",
-                "Stdout: ",
-                "Stderr: cat: i_dont_exist.txt: No such file or directory",
-                "Actual Output:",
-                "Exit Code: 1",
-                "Stdout: ",
-                "Stderr: cat: i_dont_exist.txt: No such file or directory",
+                "{}{}{}{}{}{}{}{}{}",
+                "Failure with args: i_dont_exist.txt, -e, \n",
+                "Expected Output:\n",
+                "Exit Code: 1\n",
+                "Stdout: \n",
+                "Stderr: cat: i_dont_exist.txt: No such file or directory\n\n",
+                "Actual Output:\n",
+                "Exit Code: 1\n",
+                "Stdout: \n",
+                "Stderr: cat: i_dont_exist.txt: No such file or directory\n\n",
             )
         );
         Ok(())

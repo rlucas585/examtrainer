@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::question::error::MissingKeys;
+use crate::question::test::{TestError, TestResult};
 use crate::question::{self, QuestionError, Submission, Test};
 use crate::utils::Range;
 use std::fs::DirEntry;
@@ -139,15 +140,16 @@ impl Question {
         }
     }
 
-    // pub fn grade(&self) -> Result<TestResult, QuestionError> {
-    //
-    // }
+    pub fn grade(&self) -> Result<TestResult, QuestionError> {
+        self.test.run(&self.submission, &self.directories)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::error::Error;
+    use crate::question::QuestionDB;
     use std::fs;
     #[test]
     fn question_no_subject() -> Result<(), Error> {
@@ -252,6 +254,56 @@ mod tests {
             question_res.unwrap_err(),
             QuestionError::MissingKey(_)
         ));
+        Ok(())
+    }
+
+    #[test]
+    fn question_wrong_answer() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config1.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let question = question_database.get_question_by_name("Z_failed_countdown");
+        assert!(question.is_some());
+        let question = question.unwrap();
+        assert_eq!(question.difficulty(), 1);
+        let test_result = question.grade()?;
+        let error = match test_result {
+            TestResult::Passed => panic!("Test should have failed"),
+            TestResult::Failed(error) => error,
+        };
+        let trace = match error {
+            TestError::DoesNotCompile(e) => {
+                panic!("This test case should compile correctly, but: {}", e)
+            }
+            TestError::IncorrectOutput(trace) => trace,
+        };
+        assert_eq!(
+            trace.to_string(),
+            format!(
+                "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+                "Failure with args: \n",
+                "Expected Output:\n",
+                "Exit Code: 0\n",
+                "Stdout: 9876543210\n",
+                "\n",
+                "Stderr: \n",
+                "Actual Output:\n",
+                "Exit Code: 0\n",
+                "Stdout: 987543210\n",
+                "\n",
+                "Stderr: \n",
+                "Failure with args: I'll, be, ignored, \n",
+                "Expected Output:\n",
+                "Exit Code: 0\n",
+                "Stdout: 9876543210\n",
+                "\n",
+                "Stderr: \n",
+                "Actual Output:\n",
+                "Exit Code: 0\n",
+                "Stdout: 987543210\n",
+                "\n",
+                "Stderr: \n",
+            )
+        );
         Ok(())
     }
 }

@@ -295,7 +295,7 @@ mod tests {
     }
 
     #[test]
-    fn run_test() -> Result<(), QuestionError> {
+    fn run_passing_test() -> Result<(), QuestionError> {
         let buffer = fs::read_to_string("tst/resources/questions/ft_countdown/ft_countdown.toml")?;
         let dir_path = String::from("tst/resources/questions/ft_countdown");
         let question_toml: question::toml::Question = toml::from_str(&buffer)?;
@@ -310,6 +310,62 @@ mod tests {
         let submission: Submission = Submission::build_from_toml(submission_toml)?;
         let test_result = test.run(&submission, &dirs)?;
         assert!(matches!(test_result, TestResult::Passed));
+        Ok(())
+    }
+
+    #[test]
+    fn run_failing_test() -> Result<(), QuestionError> {
+        let buffer = fs::read_to_string("tst/resources/questions/ft_countdown/ft_countdown.toml")?;
+        let dir_path = String::from("tst/resources/questions/ft_countdown");
+        let question_toml: question::toml::Question = toml::from_str(&buffer)?;
+        let dirs = QuestionDirs {
+            submit_directory: "tst/resources/rendu_test/Z_failed_countdown".into(),
+            subject_directory: "tst/resources/questions/ft_countdown/ft_countdown.subject".into(),
+            question_directory: "tst/resources/questions/ft_countdown".into(),
+        };
+        let test_toml: question::toml::Test = question_toml.test;
+        let submission_toml: question::toml::Submission = question_toml.submission;
+        let test: Test = Test::build_from_toml(test_toml, &dir_path)?;
+        let submission: Submission = Submission::build_from_toml(submission_toml)?;
+        let test_result = test.run(&submission, &dirs)?;
+        let error = match test_result {
+            TestResult::Passed => panic!("Test should have failed"),
+            TestResult::Failed(error) => error,
+        };
+        let trace = match error {
+            TestError::DoesNotCompile(e) => {
+                panic!("This test case should compile correctly, but {}", e)
+            }
+            TestError::IncorrectOutput(trace) => trace,
+        };
+        assert_eq!(
+            trace.to_string(),
+            format!(
+                "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+                "Failure with args: \n",
+                "Expected Output:\n",
+                "Exit Code: 0\n",
+                "Stdout: 9876543210\n",
+                "\n",
+                "Stderr: \n",
+                "Actual Output:\n",
+                "Exit Code: 0\n",
+                "Stdout: 987543210\n",
+                "\n",
+                "Stderr: \n",
+                "Failure with args: I'll, be, ignored, \n",
+                "Expected Output:\n",
+                "Exit Code: 0\n",
+                "Stdout: 9876543210\n",
+                "\n",
+                "Stderr: \n",
+                "Actual Output:\n",
+                "Exit Code: 0\n",
+                "Stdout: 987543210\n",
+                "\n",
+                "Stderr: \n",
+            )
+        );
         Ok(())
     }
 }

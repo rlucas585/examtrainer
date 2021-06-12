@@ -109,7 +109,7 @@ impl fmt::Display for ProgramOutput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Exit Code: {}", self.status)?;
         writeln!(f, "Stdout: {}", self.stdout)?;
-        write!(f, "Stderr: {}", self.stderr)
+        writeln!(f, "Stderr: {}", self.stderr)
     }
 }
 
@@ -153,7 +153,7 @@ mod tests {
                 "{}{}{}",
                 "Exit Code: 1\n",
                 "Stdout: hello there\n\n",
-                "Stderr: cat: i_dont_exist.txt: No such file or directory\n"
+                "Stderr: cat: i_dont_exist.txt: No such file or directory\n\n"
             )
         );
         Ok(())

@@ -3,7 +3,6 @@ use crate::config::Config;
 use crate::error::Error;
 use crate::utils::Range;
 use colored::*;
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fs::DirEntry;
 

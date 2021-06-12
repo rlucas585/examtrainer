@@ -192,4 +192,14 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn run_test() -> Result<(), QuestionError> {
+        let buffer = fs::read_to_string("tst/resources/questions/hello_world/hello_world.toml")?;
+        let dir_path = String::from("tst/resources/questions/hello_world");
+        let question_toml: question::toml::Question = toml::from_str(&buffer)?;
+        let test_toml: question::toml::Test = question_toml.test;
+        let test: Test = Test::build_from_toml(test_toml, &dir_path)?;
+        Ok(())
+    }
 }

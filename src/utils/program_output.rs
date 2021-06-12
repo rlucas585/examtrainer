@@ -46,6 +46,7 @@
 //! }
 //! ```
 
+use std::fmt;
 use std::process::Output;
 
 #[derive(Debug, PartialEq)]
@@ -81,6 +82,31 @@ impl ProgramOutput {
     pub fn stderr(&self) -> &str {
         &self.stderr
     }
+
+    pub fn combine(self, other: ProgramOutput) -> Self {
+        let status = self.status.max(other.status);
+        let stdout = self.stdout + &other.stdout;
+        let stderr = self.stderr + &other.stderr;
+        Self {
+            status,
+            stdout,
+            stderr,
+        }
+    }
+}
+
+impl fmt::Display for ProgramOutput {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "Exit Code: {}", self.status)?;
+        writeln!(f, "Stdout: {}", self.stdout)?;
+        write!(f, "Stderr: {}", self.stderr)
+    }
+}
+
+impl From<Output> for ProgramOutput {
+    fn from(input: Output) -> ProgramOutput {
+        ProgramOutput::new(input)
+    }
 }
 
 #[cfg(test)]
@@ -98,6 +124,27 @@ mod tests {
         assert_eq!(
             output.stderr(),
             "cat: i_dont_exist.txt: No such file or directory\n"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_display() -> Result<(), Error> {
+        let output1: ProgramOutput = Command::new("echo")
+            .arg("hello")
+            .arg("there")
+            .output()?
+            .into();
+        let output2: ProgramOutput = Command::new("cat").arg("i_dont_exist.txt").output()?.into();
+        let joined = output1.combine(output2);
+        assert_eq!(
+            joined.to_string(),
+            format!(
+                "{}{}{}",
+                "Exit Code: 1\n",
+                "Stdout: hello there\n\n",
+                "Stderr: cat: i_dont_exist.txt: No such file or directory\n"
+            )
         );
         Ok(())
     }

@@ -9,6 +9,7 @@ pub enum Error {
     Config(ConfigError),
     IO(io::Error),
     Question(QuestionError),
+    General(String),
 }
 
 impl fmt::Display for Error {
@@ -17,6 +18,7 @@ impl fmt::Display for Error {
             Self::Config(config_error) => write!(f, "Config Error: {}", config_error),
             Self::IO(io_e) => write!(f, "IO Error: {}", io_e),
             Self::Question(q_e) => write!(f, "Question Error: {}", q_e),
+            Self::General(e) => write!(f, "Error: {}", e),
         }
     }
 }

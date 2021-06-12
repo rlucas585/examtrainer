@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::question::{self, QuestionError, Submission, Test};
+use crate::utils::Range;
 use std::fs::DirEntry;
 use std::path::Path;
 
@@ -70,6 +71,10 @@ impl Question {
 
     pub fn difficulty(&self) -> u32 {
         self.difficulty
+    }
+
+    pub fn has_difficulty_in_range(&self, range: &Range) -> bool {
+        range.contains(self.difficulty)
     }
 
     fn validate_subject_directory(
@@ -168,6 +173,8 @@ mod tests {
             "tst/resources/questions/hello_world/hello_world.subject"
         );
         assert!(matches!(question.test, Test::CompiledTogether(_)));
+        assert!(question.has_difficulty_in_range(&Range::new(0, 4)?));
+        assert!(!question.has_difficulty_in_range(&Range::new(5, 10)?));
         Ok(())
     }
 

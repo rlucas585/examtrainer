@@ -31,7 +31,6 @@ impl QuestionDB {
         for dir in question_dirs.into_iter() {
             if let Ok(question_dir) = dir {
                 match Question::build_from_dir_entry(config, &question_dir) {
-                    // Ok(question) => questions.push(question),
                     Ok(question) => insert_new_question(&mut questions, question),
                     Err(e) => print_question_error(&question_dir, e),
                 }
@@ -82,6 +81,7 @@ mod tests {
     fn generate_questions() -> Result<(), Error> {
         let config = Config::new_from("tst/resources/test_config1.toml")?;
         let question_database = QuestionDB::new(&config)?;
+        println!("{:?}", question_database);
         Ok(())
     }
 

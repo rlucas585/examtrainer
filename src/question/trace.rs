@@ -13,6 +13,10 @@ impl Trace {
         }
     }
 
+    pub fn exists(&self) -> bool {
+        self.data.len() > 0
+    }
+
     pub fn binary_output(
         &mut self,
         args: &Vec<String>,

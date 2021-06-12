@@ -17,46 +17,40 @@
 //! `.out` file, and stderr compared against a `.err` file.
 
 use crate::question;
+use crate::question::compiler::{remove_binary, CompileResult, Compiler};
 use crate::question::error::MissingKeys;
+use crate::question::question::QuestionDirs;
 use crate::question::{QuestionError, Submission, Trace};
+use crate::utils::ProgramOutput;
 use std::fmt;
 use std::path::Path;
-// use crate::utils::ProgramOutput; // TODO needed later
+use std::process::Command; // TODO needed later
 
 #[derive(Debug)]
 pub enum TestError {
     DoesNotCompile(String),
+    IncorrectOutput(Trace),
 }
 
 impl fmt::Display for TestError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::DoesNotCompile(s) => write!(f, "Compilation error: {}", s),
+            Self::IncorrectOutput(trace) => write!(f, "IncorrectOutput, Trace: {}", trace),
         }
     }
 }
 
 impl std::error::Error for TestError {}
 
-// fn compile(sources: &Vec<String>, flags: Option<&Vec<String>>) -> Result<String, TestError> {
-//     let binary_name: String = thread_rng()
-//         .sample_iter(&Alphanumeric)
-//         .take(10)
-//         .map(char::from)
-//         .collect();
-// }
-
-// fn compiled_together(
-//     sources1: &Vec<String>,
-//     sources2: &Vec<String>,
-//     flags: Option<&Vec<String>>,
-// ) -> Result<String, TestError> {
-//     let binary_name: String = thread_rng()
-//         .sample_iter(&Alphanumeric)
-//         .take(10)
-//         .map(char::from)
-//         .collect();
-// }
+fn run_binary_with_args(binary: &str, args: &Vec<String>) -> Result<ProgramOutput, QuestionError> {
+    let mut exec = Command::new(binary);
+    for arg in args.iter() {
+        exec.arg(arg);
+    }
+    let output = exec.output()?;
+    Ok(ProgramOutput::new(output))
+}
 
 #[derive(Debug)]
 pub struct Exec {
@@ -75,14 +69,56 @@ impl Exec {
         }
     }
 
-    // fn run(&self, submission: &Submission) -> Result<TestResult, QuestionError> {
-    //     match submission {
-    //         Submission::Exec(exec) => self.run_with_binary(exec.name()),
-    //         Submission::Sources(sources) => {}
-    //     }
-    // }
+    fn run(
+        &self,
+        submission: &Submission,
+        dirs: &QuestionDirs,
+    ) -> Result<TestResult, QuestionError> {
+        match submission {
+            Submission::Exec(exec) => self.run_with_binary(exec.name(), dirs),
+            Submission::Sources(sources) => {
+                let mut compiler = Compiler::new(sources.compiler());
+                for source in sources.sources().iter() {
+                    compiler.add_source(format!("{}/{}", dirs.submit_directory, source));
+                }
+                if let Some(flags) = sources.flags() {
+                    for flag in flags.iter() {
+                        compiler.add_flag(flag);
+                    }
+                }
+                let compile_result = compiler.compile()?;
+                let binary = match compile_result {
+                    CompileResult::Ok(binary_name) => binary_name,
+                    CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
+                };
+                // Don't think this is necessary, temporary binary will be created in current
+                // directory before being deleted
+                let binary = format!("./{}", binary);
+                self.run_with_binary(&binary, dirs)
+            }
+        }
+    }
 
-    // fn run_with_binary(&self, binary: &str) -> Result<TestResult, QuestionError> {}
+    fn run_with_binary(
+        &self,
+        binary: &str,
+        dirs: &QuestionDirs,
+    ) -> Result<TestResult, QuestionError> {
+        let mut trace = Trace::new();
+        for args in self.args.iter() {
+            let test_output = run_binary_with_args(&self.binary, args)?;
+            let submit_output = run_binary_with_args(binary, args)?;
+            if test_output != submit_output {
+                trace.binary_output(args, test_output, submit_output);
+            }
+        }
+        remove_binary(binary)?;
+        if trace.exists() {
+            Ok(TestResult::Failed(TestError::IncorrectOutput(trace)))
+        } else {
+            Ok(TestResult::Passed)
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -202,19 +238,25 @@ impl Test {
         }
     }
 
-    // pub fn run(&self, submission: &Submission) -> Result<TestResult, QuestionError> {
-    //     match self {
-    //         Self::Exec(exec) => exec.run(submission),
-    //         Self::UnitTest(unit_test) => unit_test.run(submission),
-    //         Self::Sources(sources) => sources.run(submission),
-    //         Self::CompiledTogether(compiled_together) => compiled_together.run(submission),
-    //     }
-    // }
+    pub fn run(
+        &self,
+        submission: &Submission,
+        dirs: &QuestionDirs,
+    ) -> Result<TestResult, QuestionError> {
+        match self {
+            Self::Exec(exec) => exec.run(submission, dirs),
+            _ => unimplemented!("Have not yet implemented test for different types"),
+            // Self::UnitTest(unit_test, dirs) => unit_test.run(submission),
+            // Self::Sources(sources, dirs) => sources.run(submission),
+            // Self::CompiledTogether(compiled_together, dirs) => compiled_together.run(submission),
+        }
+    }
 }
 
+#[derive(Debug)]
 pub enum TestResult {
     Passed,
-    Failed(Trace),
+    Failed(TestError),
 }
 
 #[cfg(test)]
@@ -254,11 +296,20 @@ mod tests {
 
     #[test]
     fn run_test() -> Result<(), QuestionError> {
-        let buffer = fs::read_to_string("tst/resources/questions/hello_world/hello_world.toml")?;
-        let dir_path = String::from("tst/resources/questions/hello_world");
+        let buffer = fs::read_to_string("tst/resources/questions/ft_countdown/ft_countdown.toml")?;
+        let dir_path = String::from("tst/resources/questions/ft_countdown");
         let question_toml: question::toml::Question = toml::from_str(&buffer)?;
+        let dirs = QuestionDirs {
+            submit_directory: "tst/resources/rendu_test/ft_countdown".into(),
+            subject_directory: "tst/resources/questions/ft_countdown/ft_countdown.subject".into(),
+            question_directory: "tst/resources/questions/ft_countdown".into(),
+        };
         let test_toml: question::toml::Test = question_toml.test;
+        let submission_toml: question::toml::Submission = question_toml.submission;
         let test: Test = Test::build_from_toml(test_toml, &dir_path)?;
+        let submission: Submission = Submission::build_from_toml(submission_toml)?;
+        let test_result = test.run(&submission, &dirs)?;
+        assert!(matches!(test_result, TestResult::Passed));
         Ok(())
     }
 }

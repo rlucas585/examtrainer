@@ -1,16 +1,22 @@
 use crate::config::Config;
+use crate::question::error::MissingKeys;
 use crate::question::{self, QuestionError, Submission, Test};
 use crate::utils::Range;
 use std::fs::DirEntry;
 use std::path::Path;
 
 #[derive(Debug)]
+pub struct QuestionDirs {
+    pub submit_directory: String,
+    pub question_directory: String,
+    pub subject_directory: String,
+}
+
+#[derive(Debug)]
 pub struct Question {
     name: String,
     difficulty: u32,
-    submit_directory: String,
-    question_directory: String,
-    subject_directory: String,
+    directories: QuestionDirs,
     submission: Submission,
     test: Test,
 }
@@ -32,12 +38,18 @@ impl Question {
         Ok(Self {
             name,
             difficulty: toml.info.difficulty,
-            submit_directory,
-            question_directory,
-            subject_directory,
+            directories: QuestionDirs {
+                submit_directory,
+                question_directory,
+                subject_directory,
+            },
             submission,
             test,
         })
+    }
+
+    pub fn directories(&self) -> &QuestionDirs {
+        &self.directories
     }
 
     pub fn build_from_dir_entry(
@@ -102,7 +114,15 @@ impl Question {
     /// If additional types are added in future, then additional validation may be required here.
     fn check_type_validity(toml: &question::toml::Question) -> Result<(), QuestionError> {
         match &toml.test.test_type[..] {
-            "executable" => Ok(()),
+            "executable" => {
+                if toml.submission.submission_type == "sources"
+                    && toml.submission.compiler.is_none()
+                {
+                    Err(QuestionError::MissingKey(MissingKeys::SubSources))
+                } else {
+                    Ok(())
+                }
+            }
             "unit-test" => {
                 if toml.submission.submission_type != "sources" {
                     Err(QuestionError::MismatchedQuestion(
@@ -165,15 +185,15 @@ mod tests {
         let question = question_res?;
         assert_eq!(question.name(), "hello_world");
         assert_eq!(
-            question.submit_directory,
+            question.directories().submit_directory,
             "tst/resources/rendu_test/hello_world"
         );
         assert_eq!(
-            question.question_directory,
+            question.directories().question_directory,
             "tst/resources/questions/hello_world"
         );
         assert_eq!(
-            question.subject_directory,
+            question.directories().subject_directory,
             "tst/resources/questions/hello_world/hello_world.subject"
         );
         assert!(matches!(question.test, Test::CompiledTogether(_)));
@@ -200,18 +220,38 @@ mod tests {
         assert!(question_res.is_ok());
         let question = question_res?;
         assert_eq!(
-            question.submit_directory,
+            question.directories().submit_directory,
             "tst/resources/rendu_test/hello_world"
         );
         assert_eq!(
-            question.question_directory,
+            question.directories().question_directory,
             "tst/resources/questions/hello_world"
         );
         assert_eq!(
-            question.subject_directory,
+            question.directories().subject_directory,
             "tst/resources/questions/hello_world/hello_world.subject"
         );
         assert!(matches!(question.test, Test::CompiledTogether(_)));
+        Ok(())
+    }
+
+    #[test]
+    fn question_invalid_sources() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config1.toml")?;
+        let dir_path = format!(
+            "{}/{}",
+            config.directories.question_directory, "Z_no_compiler_countdown"
+        );
+        let file = format!("{}/{}", dir_path, "ft_countdown.toml");
+        let buffer = fs::read_to_string(file)?;
+        let toml: question::toml::Question =
+            toml::from_str(&buffer).map_err(|e| Error::Question(e.into()))?;
+        let question_res = Question::build_from_toml(&config, toml, &dir_path);
+        assert!(question_res.is_err());
+        assert!(matches!(
+            question_res.unwrap_err(),
+            QuestionError::MissingKey(_)
+        ));
         Ok(())
     }
 }

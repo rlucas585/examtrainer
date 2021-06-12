@@ -39,6 +39,20 @@ impl Sources {
             _ => Err(MissingKeys::SubSources),
         }
     }
+
+    // Will panic if there is no compiler, which should be validated during Submission
+    // initialization
+    pub fn compiler(&self) -> &str {
+        self.compiler.as_ref().unwrap()
+    }
+
+    pub fn sources(&self) -> &Vec<String> {
+        &self.sources
+    }
+
+    pub fn flags(&self) -> &Option<Vec<String>> {
+        &self.flags
+    }
 }
 
 #[derive(Debug)]

@@ -108,8 +108,8 @@ impl fmt::Display for MissingKeys {
             ),
             Self::SubSources => write!(
                 f,
-                "'sources' type submission must contain the following key:\n- {}",
-                "sources"
+                "'sources' type submission must contain the following key:\n- {}\n- {}",
+                "sources", "compiler (if none is specified in test)"
             ),
         }
     }

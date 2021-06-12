@@ -1,5 +1,5 @@
-use crate::error::Error;
 use crate::question::test::TestError;
+use crate::question::QuestionError;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use std::process::Command;
@@ -22,7 +22,7 @@ impl CompileResult {
 #[derive(Debug)]
 pub struct Compiler<'a> {
     compiler: &'a str,
-    sources: Vec<&'a str>,
+    sources: Vec<String>,
     flags: Vec<&'a str>,
 }
 
@@ -35,7 +35,7 @@ impl<'a> Compiler<'a> {
         }
     }
 
-    pub fn add_source(&mut self, source: &'a str) {
+    pub fn add_source(&mut self, source: String) {
         self.sources.push(source);
     }
 
@@ -43,7 +43,7 @@ impl<'a> Compiler<'a> {
         self.flags.push(flag);
     }
 
-    pub fn compile(&self) -> Result<CompileResult, Error> {
+    pub fn compile(&self) -> Result<CompileResult, QuestionError> {
         let binary_name: String = thread_rng()
             .sample_iter(&Alphanumeric)
             .take(10)
@@ -70,7 +70,7 @@ impl<'a> Compiler<'a> {
     }
 }
 
-fn remove_binary(binary: &str) -> Result<std::process::Output, Error> {
+pub fn remove_binary(binary: &str) -> Result<std::process::Output, QuestionError> {
     Command::new("rm")
         .arg(binary)
         .output()
@@ -83,7 +83,7 @@ mod tests {
 
     use crate::utils::ProgramOutput;
     #[test]
-    fn compile_test() -> Result<(), Error> {
+    fn compile_test() -> Result<(), QuestionError> {
         let submit_sources = vec!["tst/resources/rendu_test/hello_world/hello_world.c"];
         let test_sources = vec!["tst/resources/questions/hello_world/main.c"];
         let submit_flags = vec![];
@@ -94,7 +94,7 @@ mod tests {
             compiler.add_flag(flag);
         }
         for source in test_sources.iter().chain(submit_sources.iter()) {
-            compiler.add_source(source);
+            compiler.add_source(source.to_string());
         }
         let compile_result = compiler.compile()?;
         assert!(matches!(compile_result, CompileResult::Ok(_)));

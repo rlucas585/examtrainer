@@ -28,12 +28,10 @@ impl QuestionDB {
                 }
             });
         let mut questions = HashMap::new();
-        for dir in question_dirs.into_iter() {
-            if let Ok(question_dir) = dir {
-                match Question::build_from_dir_entry(config, &question_dir) {
-                    Ok(question) => insert_new_question(&mut questions, question),
-                    Err(e) => print_question_error(&question_dir, e),
-                }
+        for dir in question_dirs.into_iter().flatten() {
+            match Question::build_from_dir_entry(config, &dir) {
+                Ok(question) => insert_new_question(&mut questions, question),
+                Err(e) => print_question_error(&dir, e),
             }
         }
         Ok(Self { questions })

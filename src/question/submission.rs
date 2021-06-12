@@ -74,12 +74,13 @@ impl Submission {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::question::toml;
     use std::fs;
     #[test]
     fn read_submission_toml() -> Result<(), QuestionError> {
         let buffer = fs::read_to_string("tst/resources/question_1.toml")?;
-        let question_toml: question::toml::Question = toml::from_str(&buffer)?;
-        let submission_toml: question::toml::Submission = question_toml.submission;
+        let question_toml: toml::Question = toml_parse::from_str(&buffer)?;
+        let submission_toml: toml::Submission = question_toml.submission;
         let submission: Submission = Submission::build_from_toml(submission_toml)?;
         assert!(matches!(submission, Submission::Sources(_)));
         match submission {

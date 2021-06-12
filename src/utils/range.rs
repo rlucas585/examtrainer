@@ -17,7 +17,7 @@ impl Range {
         }
     }
 
-    pub fn from_vector(vec: &Vec<u32>) -> Result<Self, Error> {
+    pub fn from_vector(vec: &[u32]) -> Result<Self, Error> {
         if vec.len() == 2 {
             if vec[0] > vec[1] {
                 Err(Error::General(
@@ -36,7 +36,7 @@ impl Range {
         }
     }
 
-    pub fn new_range_vector(vec: &Vec<Vec<u32>>) -> Result<Vec<Self>, Error> {
+    pub fn new_range_vector(vec: &[Vec<u32>]) -> Result<Vec<Self>, Error> {
         let mut output = Vec::new();
         for range in vec.iter() {
             let new_val = Self::from_vector(range)?;

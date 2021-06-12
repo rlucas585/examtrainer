@@ -9,7 +9,7 @@ pub enum ConfigError {
     NoConfigDirectory,
     NoExamTrainerDirectory,
     ConfigFileNotFound,
-    InvalidConfigFile(toml::de::Error),
+    InvalidConfigFile(toml_parse::de::Error),
     NoQuestionDirectory(String),
     NoExamDirectory(String),
     NoSubjectDirectory(String),
@@ -44,8 +44,8 @@ impl From<io::Error> for ConfigError {
     }
 }
 
-impl From<toml::de::Error> for ConfigError {
-    fn from(input: toml::de::Error) -> Self {
+impl From<toml_parse::de::Error> for ConfigError {
+    fn from(input: toml_parse::de::Error) -> Self {
         ConfigError::InvalidConfigFile(input)
     }
 }

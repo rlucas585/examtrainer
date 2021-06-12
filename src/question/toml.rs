@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn read_question_toml() -> Result<(), QuestionError> {
         let buffer = fs::read_to_string("tst/resources/question_1.toml")?;
-        let toml: Question = toml::from_str(&buffer)?;
+        let toml: Question = toml_parse::from_str(&buffer)?;
         assert_eq!(toml.info.name, "hello_world");
         assert_eq!(toml.info.authors, Some(vec!("Ryan Lucas".into())));
         assert_eq!(toml.info.difficulty, 2);
@@ -90,7 +90,7 @@ mod tests {
     #[test]
     fn read_invalid_toml() -> Result<(), QuestionError> {
         let buffer = fs::read_to_string("tst/resources/invalid_1.toml")?;
-        let toml_result: Result<Question, toml::de::Error> = toml::from_str(&buffer);
+        let toml_result: Result<Question, toml_parse::de::Error> = toml_parse::from_str(&buffer);
         assert!(toml_result.is_err());
         assert_eq!(
             "expected a right bracket, found a left bracket at line 23 column 5",

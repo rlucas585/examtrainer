@@ -14,12 +14,12 @@ impl Trace {
     }
 
     pub fn exists(&self) -> bool {
-        self.data.len() > 0
+        !self.data.is_empty()
     }
 
     pub fn binary_output(
         &mut self,
-        args: &Vec<String>,
+        args: &[String],
         expected: ProgramOutput,
         actual: ProgramOutput,
     ) {
@@ -57,6 +57,12 @@ impl Trace {
     pub fn custom_message(&mut self, message: &str) {
         self.data += message;
         self.data += "\n";
+    }
+}
+
+impl Default for Trace {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

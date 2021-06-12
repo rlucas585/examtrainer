@@ -19,8 +19,7 @@
 use crate::question;
 use crate::question::compiler::{remove_binary, CompileResult, Compiler};
 use crate::question::error::MissingKeys;
-use crate::question::question::QuestionDirs;
-use crate::question::{QuestionError, Submission, Trace};
+use crate::question::{QuestionDirs, QuestionError, Submission, Trace};
 use crate::utils::ProgramOutput;
 use std::fmt;
 use std::path::Path;
@@ -43,7 +42,7 @@ impl fmt::Display for TestError {
 
 impl std::error::Error for TestError {}
 
-fn run_binary_with_args(binary: &str, args: &Vec<String>) -> Result<ProgramOutput, QuestionError> {
+fn run_binary_with_args(binary: &str, args: &[String]) -> Result<ProgramOutput, QuestionError> {
     let mut exec = Command::new(binary);
     for arg in args.iter() {
         exec.arg(arg);
@@ -258,13 +257,14 @@ pub enum TestResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::question::toml;
     use std::fs;
     #[test]
     fn read_test_toml() -> Result<(), QuestionError> {
         let buffer = fs::read_to_string("tst/resources/questions/hello_world/hello_world.toml")?;
         let dir_path = String::from("tst/resources/questions/hello_world");
-        let question_toml: question::toml::Question = toml::from_str(&buffer)?;
-        let test_toml: question::toml::Test = question_toml.test;
+        let question_toml: toml::Question = toml_parse::from_str(&buffer)?;
+        let test_toml: toml::Test = question_toml.test;
         let test: Test = Test::build_from_toml(test_toml, &dir_path)?;
         assert!(matches!(test, Test::CompiledTogether(_)));
         match test {
@@ -294,7 +294,7 @@ mod tests {
     fn run_passing_test() -> Result<(), QuestionError> {
         let buffer = fs::read_to_string("tst/resources/questions/ft_countdown/ft_countdown.toml")?;
         let dir_path = String::from("tst/resources/questions/ft_countdown");
-        let question_toml: question::toml::Question = toml::from_str(&buffer)?;
+        let question_toml: toml::Question = toml_parse::from_str(&buffer)?;
         let dirs = QuestionDirs {
             submit_directory: "tst/resources/rendu_test/ft_countdown".into(),
             subject_directory: "tst/resources/questions/ft_countdown/ft_countdown.subject".into(),
@@ -313,14 +313,14 @@ mod tests {
     fn run_failing_test() -> Result<(), QuestionError> {
         let buffer = fs::read_to_string("tst/resources/questions/ft_countdown/ft_countdown.toml")?;
         let dir_path = String::from("tst/resources/questions/ft_countdown");
-        let question_toml: question::toml::Question = toml::from_str(&buffer)?;
+        let question_toml: toml::Question = toml_parse::from_str(&buffer)?;
         let dirs = QuestionDirs {
             submit_directory: "tst/resources/rendu_test/Z_failed_countdown".into(),
             subject_directory: "tst/resources/questions/ft_countdown/ft_countdown.subject".into(),
             question_directory: "tst/resources/questions/ft_countdown".into(),
         };
-        let test_toml: question::toml::Test = question_toml.test;
-        let submission_toml: question::toml::Submission = question_toml.submission;
+        let test_toml: toml::Test = question_toml.test;
+        let submission_toml: toml::Submission = question_toml.submission;
         let test: Test = Test::build_from_toml(test_toml, &dir_path)?;
         let submission: Submission = Submission::build_from_toml(submission_toml)?;
         let test_result = test.run(&submission, &dirs)?;

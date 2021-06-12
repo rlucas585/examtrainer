@@ -6,7 +6,7 @@ use std::io;
 pub enum QuestionError {
     InvalidTestType(String),
     InvalidSubmissionType(String),
-    InvalidTestFile(toml::de::Error),
+    InvalidTestFile(toml_parse::de::Error),
     MismatchedQuestion(String, String), // TODO: use Enum instead of String in future
     NoSubject,
     NoStdout,
@@ -53,8 +53,8 @@ impl From<io::Error> for QuestionError {
     }
 }
 
-impl From<toml::de::Error> for QuestionError {
-    fn from(input: toml::de::Error) -> Self {
+impl From<toml_parse::de::Error> for QuestionError {
+    fn from(input: toml_parse::de::Error) -> Self {
         Self::InvalidTestFile(input)
     }
 }
@@ -82,34 +82,28 @@ impl fmt::Display for MissingKeys {
         match self {
             Self::Exec => write!(
                 f,
-                "'executable' type question must contain the following keys:\n- {}\n- {}",
-                "binary", "args"
+                "'executable' type question must contain the following keys:\n- binary\n- args",
             ),
             Self::UnitTest => write!(
                 f,
-                "'unit-test' type question must contain the following keys:\n- {}\n- {}",
-                "sources", "compiler"
+                "'unit-test' type question must contain the following keys:\n- sources\n- compiler",
             ),
             Self::Sources => write!(
                 f,
-                "'sources' type question must contain the following keys:\n- {}\n- {}",
-                "sources", "compiler"
+                "'sources' type question must contain the following keys:\n- sources\n- compiler",
             ),
             Self::CompiledTogether => write!(
                 f,
                 "'expected-output' type question must contain the following keys:
-- {}\n- {}\n- {}\n- {}\n- {}",
-                "sources", "compiler", "expected_stdout", "expected_stderr", "args"
+- sources\n- compiler\n- expected_stdout\n- expected_stderr\n- args",
             ),
             Self::SubExec => write!(
                 f,
-                "'executable' type submission must contain the following key:\n- {}",
-                "binary"
+                "'executable' type submission must contain the following key:\n- binary",
             ),
             Self::SubSources => write!(
                 f,
-                "'sources' type submission must contain the following keys:\n- {}\n- {}",
-                "sources", "compiler (if none is specified in test)"
+                "'sources' type submission must contain the following keys:\n- sources\n- compiler",
             ),
         }
     }

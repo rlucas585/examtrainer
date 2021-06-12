@@ -118,6 +118,10 @@ impl Question {
             invalid => Err(QuestionError::InvalidTestType(invalid.into())),
         }
     }
+
+    // pub fn grade(&self) -> Result<TestResult, QuestionError> {
+    //
+    // }
 }
 
 #[cfg(test)]

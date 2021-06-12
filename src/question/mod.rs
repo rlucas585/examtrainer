@@ -1,3 +1,4 @@
+mod compiler;
 pub mod database;
 pub mod error;
 pub mod question;
@@ -6,6 +7,7 @@ mod test;
 mod toml;
 mod trace;
 
+use compiler::Compiler;
 pub use database::QuestionDB;
 pub use error::QuestionError;
 pub use question::*;

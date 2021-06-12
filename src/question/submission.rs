@@ -15,6 +15,10 @@ impl Exec {
             _ => Err(MissingKeys::SubExec),
         }
     }
+
+    pub fn name(&self) -> &str {
+        &self.binary
+    }
 }
 
 #[derive(Debug)]

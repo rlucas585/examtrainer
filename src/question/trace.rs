@@ -49,6 +49,11 @@ impl Trace {
         self.data += "Actual Stderr:\n";
         self.data += &actual_stderr;
     }
+
+    pub fn custom_message(&mut self, message: &str) {
+        self.data += message;
+        self.data += "\n";
+    }
 }
 
 impl fmt::Display for Trace {

@@ -18,9 +18,45 @@
 
 use crate::question;
 use crate::question::error::MissingKeys;
-use crate::question::{QuestionError, Submission};
+use crate::question::{QuestionError, Submission, Trace};
+use std::fmt;
 use std::path::Path;
 // use crate::utils::ProgramOutput; // TODO needed later
+
+#[derive(Debug)]
+pub enum TestError {
+    DoesNotCompile(String),
+}
+
+impl fmt::Display for TestError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::DoesNotCompile(s) => write!(f, "Compilation error: {}", s),
+        }
+    }
+}
+
+impl std::error::Error for TestError {}
+
+// fn compile(sources: &Vec<String>, flags: Option<&Vec<String>>) -> Result<String, TestError> {
+//     let binary_name: String = thread_rng()
+//         .sample_iter(&Alphanumeric)
+//         .take(10)
+//         .map(char::from)
+//         .collect();
+// }
+
+// fn compiled_together(
+//     sources1: &Vec<String>,
+//     sources2: &Vec<String>,
+//     flags: Option<&Vec<String>>,
+// ) -> Result<String, TestError> {
+//     let binary_name: String = thread_rng()
+//         .sample_iter(&Alphanumeric)
+//         .take(10)
+//         .map(char::from)
+//         .collect();
+// }
 
 #[derive(Debug)]
 pub struct Exec {
@@ -38,6 +74,15 @@ impl Exec {
             _ => Err(MissingKeys::Exec),
         }
     }
+
+    // fn run(&self, submission: &Submission) -> Result<TestResult, QuestionError> {
+    //     match submission {
+    //         Submission::Exec(exec) => self.run_with_binary(exec.name()),
+    //         Submission::Sources(sources) => {}
+    //     }
+    // }
+
+    // fn run_with_binary(&self, binary: &str) -> Result<TestResult, QuestionError> {}
 }
 
 #[derive(Debug)]
@@ -156,6 +201,20 @@ impl Test {
             invalid => Err(QuestionError::InvalidTestType(invalid.into())),
         }
     }
+
+    // pub fn run(&self, submission: &Submission) -> Result<TestResult, QuestionError> {
+    //     match self {
+    //         Self::Exec(exec) => exec.run(submission),
+    //         Self::UnitTest(unit_test) => unit_test.run(submission),
+    //         Self::Sources(sources) => sources.run(submission),
+    //         Self::CompiledTogether(compiled_together) => compiled_together.run(submission),
+    //     }
+    // }
+}
+
+pub enum TestResult {
+    Passed,
+    Failed(Trace),
 }
 
 #[cfg(test)]

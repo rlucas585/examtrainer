@@ -49,7 +49,7 @@
 use std::fmt;
 use std::process::Output;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ProgramOutput {
     status: i32,
     stdout: String,

@@ -40,6 +40,7 @@ pub fn run_binary_with_args(binary: &str, args: &[String]) -> Result<BinaryResul
         let output = child.wait_with_output()?;
         Ok(BinaryResult::Output(ProgramOutput::new(output)))
     } else {
+        child.kill()?;
         Ok(BinaryResult::Timeout)
     }
 }

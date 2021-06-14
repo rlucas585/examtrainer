@@ -157,8 +157,8 @@ impl Question {
         }
     }
 
-    pub fn grade(&self) -> Result<TestResult, QuestionError> {
-        self.test.run(&self.submission, &self.directories)
+    pub fn grade(&self, config: &Config) -> Result<TestResult, QuestionError> {
+        self.test.run(&self.submission, &self.directories, config)
     }
 }
 
@@ -274,7 +274,7 @@ mod tests {
         assert!(question.is_some());
         let question = question.unwrap();
         assert_eq!(question.difficulty(), 1);
-        let test_result = question.grade()?;
+        let test_result = question.grade(&config)?;
         let error = match test_result {
             TestResult::Passed => panic!("Test should have failed"),
             TestResult::Failed(error) => error,
@@ -325,7 +325,7 @@ mod tests {
         let question = question_database.get_question_by_name("Z_countdown_timeout");
         assert!(question.is_some());
         let question = question.unwrap();
-        let test_result = question.grade()?;
+        let test_result = question.grade(&config)?;
         let error = match test_result {
             TestResult::Passed => panic!("Test should have failed"),
             TestResult::Failed(error) => error,
@@ -348,6 +348,18 @@ mod tests {
             QuestionError::InvalidFramework(s) => assert_eq!(s, "catch2"),
             _ => panic!("Wrong error type for invalid framework test"),
         }
+        Ok(())
+    }
+
+    #[test]
+    fn question_correct_answer_unit_test() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let question = question_database.get_question_by_name("ft_strlen");
+        assert!(question.is_some());
+        let question = question.unwrap();
+        let test_result = question.grade(&config)?;
+        println!("{:?}", test_result);
         Ok(())
     }
 }

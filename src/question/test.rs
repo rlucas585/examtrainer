@@ -16,6 +16,7 @@
 //! The executable will then be run, with stdout compared against a
 //! `.out` file, and stderr compared against a `.err` file.
 
+use crate::config::Config;
 use crate::question;
 use crate::question::compiler::{remove_binary, CompileResult, Compiler};
 use crate::question::error::MissingKeys;
@@ -120,6 +121,7 @@ impl Exec {
 pub struct UnitTest {
     compiler: String,
     sources: Vec<String>,
+    flags: Option<Vec<String>>,
     framework: Option<String>,
 }
 
@@ -132,6 +134,7 @@ impl UnitTest {
                     .into_iter()
                     .map(|elem| format!("{}/{}", dir_path, elem))
                     .collect(),
+                flags: toml.flags,
                 framework: toml.framework,
             }),
             _ => Err(MissingKeys::UnitTest),
@@ -148,6 +151,52 @@ impl UnitTest {
         }
         Ok(())
     }
+
+    // fn run(
+    //     &self,
+    //     submission: &Submission,
+    //     dirs: &QuestionDirs,
+    //     config: &Config,
+    // ) -> Result<TestResult, QuestionError> {
+    //     match submission {
+    //         Submission::Sources(sources) => {
+    //             let mut compiler = Compiler::new(sources.compiler());
+    //             for source in sources.sources().iter() {
+    //                 compiler.add_source(format!("{}/{}", dirs.submit_directory, source));
+    //             }
+    //             for source in self.sources.iter() {
+    //                 compiler.add_source(format!("{}/{}", dirs.question_directory, source));
+    //             }
+    //             if let Some(flags) = self.flags {
+    //                 for flag in flags.iter() {
+    //                     compiler.add_flag(flag);
+    //                 }
+    //             }
+    //             if let Some(framework_name) = self.framework {
+    //                 let framework_flags = config.get_framework(framework_name).unwrap();
+    //                 for flag in framework_flags.iter() {
+    //                     compiler.add_flag(flag);
+    //                 }
+    //             }
+    //             let compile_result = compiler.compile()?;
+    //             let binary = match compile_result {
+    //                 CompileResult::Ok(binary_name) => binary_name,
+    //                 CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
+    //             };
+    //             let binary = format!("./{}", binary);
+    //             self.run_with_binary(&binary)
+    //         }
+    //         _ => QuestionError::InvalidTestType(String::from(
+    //             "Unit test cannot be run with any submission type other than sources",
+    //         )),
+    //     }
+    // }
+
+    // fn run_with_binary(&self, binary: &str) -> Result<TestResult, QuestionError> {
+    //     let mut trace = Trace::new();
+    //     let dummy_args: [String; 0] = [];
+    //     let output = match run_binary_with_args(binary, &dummy_args)?;
+    // }
 }
 
 #[derive(Debug)]
@@ -250,11 +299,12 @@ impl Test {
         &self,
         submission: &Submission,
         dirs: &QuestionDirs,
+        config: &Config,
     ) -> Result<TestResult, QuestionError> {
         match self {
             Self::Exec(exec) => exec.run(submission, dirs),
+            // Self::UnitTest(unit_test) => unit_test.run(submission, dirs, config),
             _ => unimplemented!("Have not yet implemented test for different types"),
-            // Self::UnitTest(unit_test, dirs) => unit_test.run(submission),
             // Self::Sources(sources, dirs) => sources.run(submission),
             // Self::CompiledTogether(compiled_together, dirs) => compiled_together.run(submission),
         }
@@ -311,7 +361,8 @@ mod tests {
     }
 
     #[test]
-    fn run_passing_test() -> Result<(), QuestionError> {
+    fn run_passing_test_exec() -> Result<(), QuestionError> {
+        let config = Config::new_from("tst/resources/test_config2.toml").unwrap();
         let buffer = fs::read_to_string("tst/resources/questions/ft_countdown/ft_countdown.toml")?;
         let dir_path = String::from("tst/resources/questions/ft_countdown");
         let question_toml: toml::Question = toml_parse::from_str(&buffer)?;
@@ -324,13 +375,14 @@ mod tests {
         let submission_toml: question::toml::Submission = question_toml.submission;
         let test: Test = Test::build_from_toml(test_toml, &dir_path)?;
         let submission: Submission = Submission::build_from_toml(submission_toml)?;
-        let test_result = test.run(&submission, &dirs)?;
+        let test_result = test.run(&submission, &dirs, &config)?;
         assert!(matches!(test_result, TestResult::Passed));
         Ok(())
     }
 
     #[test]
     fn run_failing_test() -> Result<(), QuestionError> {
+        let config = Config::new_from("tst/resources/test_config2.toml").unwrap();
         let buffer = fs::read_to_string("tst/resources/questions/ft_countdown/ft_countdown.toml")?;
         let dir_path = String::from("tst/resources/questions/ft_countdown");
         let question_toml: toml::Question = toml_parse::from_str(&buffer)?;
@@ -343,7 +395,7 @@ mod tests {
         let submission_toml: toml::Submission = question_toml.submission;
         let test: Test = Test::build_from_toml(test_toml, &dir_path)?;
         let submission: Submission = Submission::build_from_toml(submission_toml)?;
-        let test_result = test.run(&submission, &dirs)?;
+        let test_result = test.run(&submission, &dirs, &config)?;
         let error = match test_result {
             TestResult::Passed => panic!("Test should have failed"),
             TestResult::Failed(error) => error,

@@ -42,11 +42,11 @@ impl<'a> Compiler<'a> {
             .collect();
         let mut compile_exec = Command::new(self.compiler);
         compile_exec.arg("-o").arg(&binary_name);
-        for flag in self.flags.iter() {
-            compile_exec.arg(flag);
-        }
         for source in self.sources.iter() {
             compile_exec.arg(source);
+        }
+        for flag in self.flags.iter() {
+            compile_exec.arg(flag);
         }
         let output = compile_exec.output()?;
         if output.status.code().unwrap() != 0 {

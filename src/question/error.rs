@@ -1,5 +1,6 @@
 use std::fmt;
 use std::io;
+use std::sync::{MutexGuard, PoisonError};
 
 /// `QuestionError` denotes errors that can occur when reading/parsing a `Question` .toml file.
 #[derive(Debug)]
@@ -16,6 +17,7 @@ pub enum QuestionError {
     NoConfig,
     DuplicateQuestion(String),
     IO(io::Error),
+    Mutex,
 }
 
 impl fmt::Display for QuestionError {
@@ -43,6 +45,7 @@ impl fmt::Display for QuestionError {
                 name
             ),
             Self::IO(io_e) => write!(f, "IO Error: {}", io_e),
+            Self::Mutex => write!(f, "Poisoned Mutex error"),
         }
     }
 }
@@ -62,6 +65,12 @@ impl From<toml_parse::de::Error> for QuestionError {
 impl From<MissingKeys> for QuestionError {
     fn from(input: MissingKeys) -> Self {
         Self::MissingKey(input)
+    }
+}
+
+impl<T> From<PoisonError<MutexGuard<'_, T>>> for QuestionError {
+    fn from(_: PoisonError<MutexGuard<T>>) -> Self {
+        Self::Mutex
     }
 }
 

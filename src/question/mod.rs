@@ -1,3 +1,4 @@
+mod binary_runner;
 mod compiler;
 pub mod database;
 pub mod error;
@@ -6,6 +7,7 @@ mod test;
 mod toml;
 mod trace;
 
+pub use binary_runner::{run_binary_with_args, BinaryResult};
 pub use database::QuestionDB;
 pub use error::QuestionError;
 pub use trace::Trace;
@@ -289,6 +291,7 @@ mod tests {
                 panic!("This test case should compile correctly, but: {}", e)
             }
             TestError::IncorrectOutput(trace) => trace,
+            TestError::Timeout => panic!("This test case should pass, but it timed out!"),
         };
         assert_eq!(
             trace.to_string(),
@@ -318,6 +321,23 @@ mod tests {
                 "Stderr: \n",
             )
         );
+        Ok(())
+    }
+
+    #[test]
+    #[ignore]
+    fn question_timeout() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config1.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let question = question_database.get_question_by_name("Z_countdown_timeout");
+        assert!(question.is_some());
+        let question = question.unwrap();
+        let test_result = question.grade()?;
+        let error = match test_result {
+            TestResult::Passed => panic!("Test should have failed"),
+            TestResult::Failed(error) => error,
+        };
+        assert!(matches!(error, TestError::Timeout));
         Ok(())
     }
 }

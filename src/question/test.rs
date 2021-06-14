@@ -19,16 +19,17 @@
 use crate::question;
 use crate::question::compiler::{remove_binary, CompileResult, Compiler};
 use crate::question::error::MissingKeys;
-use crate::question::{QuestionDirs, QuestionError, Submission, Trace};
-use crate::utils::ProgramOutput;
+use crate::question::{
+    run_binary_with_args, BinaryResult, QuestionDirs, QuestionError, Submission, Trace,
+};
 use std::fmt;
 use std::path::Path;
-use std::process::Command; // TODO needed later
 
 #[derive(Debug)]
 pub enum TestError {
     DoesNotCompile(String),
     IncorrectOutput(Trace),
+    Timeout,
 }
 
 impl fmt::Display for TestError {
@@ -36,20 +37,12 @@ impl fmt::Display for TestError {
         match self {
             Self::DoesNotCompile(s) => write!(f, "Compilation error: {}", s),
             Self::IncorrectOutput(trace) => write!(f, "IncorrectOutput, Trace: {}", trace),
+            Self::Timeout => write!(f, "Submission executable timedout"),
         }
     }
 }
 
 impl std::error::Error for TestError {}
-
-fn run_binary_with_args(binary: &str, args: &[String]) -> Result<ProgramOutput, QuestionError> {
-    let mut exec = Command::new(binary);
-    for arg in args.iter() {
-        exec.arg(arg);
-    }
-    let output = exec.output()?;
-    Ok(ProgramOutput::new(output))
-}
 
 #[derive(Debug)]
 pub struct Exec {
@@ -90,8 +83,6 @@ impl Exec {
                     CompileResult::Ok(binary_name) => binary_name,
                     CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
                 };
-                // Don't think this is necessary, temporary binary will be created in current
-                // directory before being deleted
                 let binary = format!("./{}", binary);
                 self.run_with_binary(&binary)
             }
@@ -101,8 +92,17 @@ impl Exec {
     fn run_with_binary(&self, binary: &str) -> Result<TestResult, QuestionError> {
         let mut trace = Trace::new();
         for args in self.args.iter() {
-            let test_output = run_binary_with_args(&self.binary, args)?;
-            let submit_output = run_binary_with_args(binary, args)?;
+            let test_output = match run_binary_with_args(&self.binary, args)? {
+                BinaryResult::Output(output) => output,
+                BinaryResult::Timeout => panic!("A questions test timed out, question is invalid"),
+            };
+            let submit_output = match run_binary_with_args(binary, args)? {
+                BinaryResult::Output(output) => output,
+                BinaryResult::Timeout => {
+                    remove_binary(binary)?;
+                    return Ok(TestResult::Failed(TestError::Timeout));
+                }
+            };
             if test_output != submit_output {
                 trace.binary_output(args, test_output, submit_output);
             }
@@ -333,6 +333,7 @@ mod tests {
                 panic!("This test case should compile correctly, but {}", e)
             }
             TestError::IncorrectOutput(trace) => trace,
+            TestError::Timeout => panic!("This test case should pass, but it timed out!"),
         };
         assert_eq!(
             trace.to_string(),

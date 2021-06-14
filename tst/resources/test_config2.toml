@@ -1,0 +1,11 @@
+# Test Config 2
+
+frameworks = [
+{ name = "gtest", flags = ["-lgtest", "-lpthread", "-L/mnt/hard_drive/usr/lib/googletest/build/lib"] }
+]
+
+[directories]
+submit_directory = "tst/resources/rendu_test"
+question_directory = "tst/resources/questions"
+exam_directory = "tst/resources/exams"
+subject_directory = "tst/resources/subjects"

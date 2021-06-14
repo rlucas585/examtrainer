@@ -45,7 +45,7 @@ impl Question {
     ) -> Result<Self, QuestionError> {
         Question::check_type_validity(&toml)?;
         let name = toml.info.name;
-        let submit_directory = format!("{}/{}", config.directories.submit_directory, name);
+        let submit_directory = format!("{}/{}", config.submit_dir(), name);
         let question_directory = dir_path.to_string();
         let subject_directory =
             Self::validate_subject_directory(&question_directory, &toml.test.subject)?;
@@ -170,10 +170,7 @@ mod tests {
     #[test]
     fn question_no_subject() -> Result<(), Error> {
         let config = Config::new_from("tst/resources/test_config1.toml")?;
-        let dir_path = format!(
-            "{}/{}",
-            config.directories.question_directory, "no_sub_question"
-        );
+        let dir_path = format!("{}/{}", config.question_dir(), "no_sub_question");
         let file = format!("{}/{}", dir_path, "hello_world.toml");
         let buffer = fs::read_to_string(file)?;
         let toml: toml::Question =
@@ -190,10 +187,7 @@ mod tests {
     #[test]
     fn build_valid_question() -> Result<(), Error> {
         let config = Config::new_from("tst/resources/test_config1.toml")?;
-        let dir_path = format!(
-            "{}/{}",
-            config.directories.question_directory, "hello_world"
-        );
+        let dir_path = format!("{}/{}", config.question_dir(), "hello_world");
         let file = format!("{}/{}", dir_path, "hello_world.toml");
         let buffer = fs::read_to_string(file)?;
         let toml: toml::Question =
@@ -223,7 +217,7 @@ mod tests {
     #[test]
     fn build_from_dir_entry() -> Result<(), Error> {
         let config = Config::new_from("tst/resources/test_config1.toml")?;
-        let question_dirs = std::fs::read_dir(&config.directories.question_directory)?;
+        let question_dirs = std::fs::read_dir(&config.question_dir())?;
         let mut dir_entry_opt: Option<DirEntry> = None;
         for dir in question_dirs.into_iter() {
             if let Ok(dir) = dir {
@@ -256,10 +250,7 @@ mod tests {
     #[test]
     fn question_invalid_sources() -> Result<(), Error> {
         let config = Config::new_from("tst/resources/test_config1.toml")?;
-        let dir_path = format!(
-            "{}/{}",
-            config.directories.question_directory, "Z_no_compiler_countdown"
-        );
+        let dir_path = format!("{}/{}", config.question_dir(), "Z_no_compiler_countdown");
         let file = format!("{}/{}", dir_path, "ft_countdown.toml");
         let buffer = fs::read_to_string(file)?;
         let toml: toml::Question =

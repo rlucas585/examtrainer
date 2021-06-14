@@ -19,14 +19,13 @@ impl QuestionDB {
     /// cannot be created for any reason, then a Warning is displayed on the screen, along with the
     /// reason for failure (a [`QuestionError`]).
     pub fn new(config: &Config) -> Result<Self, Error> {
-        let question_dirs =
-            std::fs::read_dir(&config.directories.question_directory)?.filter(|entry| {
-                if let Ok(file) = entry {
-                    file.path().is_dir()
-                } else {
-                    false
-                }
-            });
+        let question_dirs = std::fs::read_dir(&config.question_dir())?.filter(|entry| {
+            if let Ok(file) = entry {
+                file.path().is_dir()
+            } else {
+                false
+            }
+        });
         let mut questions = HashMap::new();
         for dir in question_dirs.into_iter().flatten() {
             match Question::build_from_dir_entry(config, &dir) {

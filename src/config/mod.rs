@@ -16,35 +16,36 @@
 //! ```
 
 pub mod error;
+mod frameworks;
+mod toml;
 
 pub use error::ConfigError;
 
-use home::home_dir;
-use serde::Deserialize;
-use std::fs::File;
-use std::io::{self, prelude::*};
-use std::path::Path;
+use frameworks::FrameworkManager;
 
-macro_rules! check_if_dir_exists {
-    ($path:ident, $error:expr) => {
-        match Path::new(&$path).exists() {
-            true => (),
-            false => ask_to_create_directory(&$path, $error)?,
+#[derive(Debug)]
+struct Directories {
+    submit_directory: String,
+    question_directory: String,
+    exam_directory: String,
+    subject_directory: String,
+}
+
+impl From<toml::Directories> for Directories {
+    fn from(input: toml::Directories) -> Self {
+        Self {
+            submit_directory: input.submit_directory,
+            question_directory: input.question_directory,
+            exam_directory: input.exam_directory,
+            subject_directory: input.subject_directory,
         }
-    };
+    }
 }
 
-#[derive(Deserialize, Debug)]
-pub struct Directories {
-    pub submit_directory: String,
-    pub question_directory: String,
-    pub exam_directory: String,
-    pub subject_directory: String,
-}
-
-#[derive(Deserialize, Debug)]
+#[derive(Debug)]
 pub struct Config {
-    pub directories: Directories,
+    directories: Directories,
+    frameworks: FrameworkManager,
 }
 
 impl Config {
@@ -56,96 +57,38 @@ impl Config {
     ///
     /// This function returns either `Ok([`Config`])`, or `Err([`ConfigError`])`.
     pub fn new() -> Result<Self, ConfigError> {
-        Self::new_internal(None)
+        let config_toml = toml::Config::new()?;
+        Self::new_internal(config_toml)
     }
 
-    /// Parse config file given as argument to create a [`Config`]
     pub fn new_from(config_path: &str) -> Result<Self, ConfigError> {
-        Self::new_internal(Some(config_path))
+        let config_toml = toml::Config::new_from(config_path)?;
+        Self::new_internal(config_toml)
     }
 
-    fn new_internal(config_path: Option<&str>) -> Result<Self, ConfigError> {
-        let mut buffer = String::new();
-        let mut config = open_config_file(config_path)?;
-        config.read_to_string(&mut buffer)?;
-        let config: Config = toml_parse::from_str(&buffer)?;
-        let question_dir = &config.directories.question_directory;
-        let exam_dir = &config.directories.exam_directory;
-        check_if_dir_exists!(
-            question_dir,
-            ConfigError::NoQuestionDirectory(question_dir.clone())
-        );
-        check_if_dir_exists!(exam_dir, ConfigError::NoExamDirectory(exam_dir.clone()));
-        Ok(config)
-    }
-}
-
-fn open_config_file(config_path: Option<&str>) -> Result<File, ConfigError> {
-    if let Some(config_path) = config_path {
-        File::open(&config_path).map_err(|e| e.into())
-    } else {
-        let home = home_dir().ok_or(ConfigError::NoHomeDirectory)?;
-        let config_dir = format!("{}/{}", home.display(), ".config");
-        let examtrainer_dir = format!("{}/{}", config_dir, "examtrainer");
-        let config_file = format!("{}/{}", examtrainer_dir, "config.toml");
-
-        check_if_dir_exists!(config_dir, ConfigError::NoConfigDirectory);
-        check_if_dir_exists!(examtrainer_dir, ConfigError::NoExamTrainerDirectory);
-        File::open(&config_file).or_else(|error| {
-            if error.kind() == io::ErrorKind::NotFound {
-                ask_to_create_default_config(home.to_str().unwrap(), &config_file)
-            } else {
-                Err(error.into())
-            }
+    fn new_internal(config_toml: toml::Config) -> Result<Self, ConfigError> {
+        let directories = config_toml.directories.into();
+        let frameworks = FrameworkManager::new(config_toml.frameworks)?;
+        Ok(Self {
+            directories,
+            frameworks,
         })
     }
-}
 
-fn create_directory(path: &str) -> Result<(), ConfigError> {
-    println!("Creating directory {}...", path);
-    std::fs::create_dir(path)?;
-    println!("Success!");
-    Ok(())
-}
-
-fn ask_to_create_directory(path: &str, error: ConfigError) -> Result<(), ConfigError> {
-    let mut buffer = String::new();
-    let stdin = io::stdin();
-    println!("    Warning: Directory {} does not exist", path);
-    println!("Create this directory? [y/n]: ");
-    stdin.read_line(&mut buffer)?;
-    match &buffer.trim().to_lowercase()[..] {
-        "y" => create_directory(path),
-        _ => Err(error),
+    pub fn submit_dir(&self) -> &str {
+        &self.directories.submit_directory
     }
-}
-
-fn create_default_config(home: &str, path: &str) -> Result<File, ConfigError> {
-    println!("Creating default configuration...");
-    let mut file = File::create(path)?;
-    let default_config = format!(
-        "[directories]
-submit_directory = \"{0}/rendu\"
-question_directory = \"{0}/.config/examtrainer/questions\"
-exam_directory = \"{0}/.config/examtrainer/exams\"
-subject_directory = \"{0}/subjects\"
-",
-        home
-    );
-    file.write_all(default_config.as_bytes())?;
-    println!("Success!");
-    File::open(path).map_err(|e| e.into())
-}
-
-fn ask_to_create_default_config(home: &str, path: &str) -> Result<File, ConfigError> {
-    let mut buffer = String::new();
-    let stdin = io::stdin();
-    println!("    Warning: Config file {} does not exist", path);
-    println!("Create default configuration file? [y/n]: ");
-    stdin.read_line(&mut buffer)?;
-    match &buffer.trim().to_lowercase()[..] {
-        "y" => create_default_config(home, path),
-        _ => Err(ConfigError::ConfigFileNotFound),
+    pub fn question_dir(&self) -> &str {
+        &self.directories.question_directory
+    }
+    pub fn exam_dir(&self) -> &str {
+        &self.directories.exam_directory
+    }
+    pub fn subject_directory(&self) -> &str {
+        &self.directories.subject_directory
+    }
+    pub fn get_framework(&self, name: &str) -> Option<&Vec<String>> {
+        self.frameworks.get(name)
     }
 }
 
@@ -188,6 +131,24 @@ mod tests {
         assert_eq!(
             config.directories.subject_directory,
             "tst/resources/subjects"
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[ignore] // Ignore as framework path should be system dependent
+    fn framework_test() -> Result<(), ConfigError> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let gtest_flags = config.get_framework("gtest");
+        assert!(gtest_flags.is_some());
+        let gtest_flags = gtest_flags.unwrap();
+        assert_eq!(
+            *gtest_flags,
+            vec![
+                "-lgtest".to_string(),
+                "-lpthread".to_string(),
+                "-L/mnt/hard_drive/usr/lib/googletest/build/lib".to_string()
+            ]
         );
         Ok(())
     }

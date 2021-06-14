@@ -14,6 +14,8 @@ pub enum ConfigError {
     NoExamDirectory(String),
     NoSubjectDirectory(String),
     IO(io::Error),
+    InvalidFramework,
+    InvalidFrameworkDir(String),
 }
 
 impl fmt::Display for ConfigError {
@@ -34,6 +36,10 @@ impl fmt::Display for ConfigError {
                 write!(f, "Subject directory '{}' could not be found", d)
             }
             Self::IO(io_e) => write!(f, "IO Error: {}", io_e),
+            Self::InvalidFramework => write!(f, "Framework values must start with '-l' or '-L'"),
+            Self::InvalidFrameworkDir(dir) => {
+                write!(f, "Invalid framework directory in Config: {}", dir)
+            }
         }
     }
 }

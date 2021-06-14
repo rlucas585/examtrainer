@@ -13,6 +13,7 @@ pub enum QuestionError {
     NoStdout,
     NoStderr,
     MissingKey(MissingKeys),
+    InvalidFramework(String),
     MultipleConfigs,
     NoConfig,
     DuplicateQuestion(String),
@@ -35,6 +36,7 @@ impl fmt::Display for QuestionError {
             Self::NoStdout => write!(f, "Expected Stdout file does not exist"),
             Self::NoStderr => write!(f, "Expected Stderr file does not exist"),
             Self::MissingKey(e) => write!(f, "Missing key: {}", e),
+            Self::InvalidFramework(frame) => write!(f, "Invalid framework: {}", frame),
             Self::MultipleConfigs => {
                 write!(f, "Multiple .toml files were found in Question directory")
             }

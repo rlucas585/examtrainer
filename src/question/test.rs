@@ -120,6 +120,7 @@ impl Exec {
 pub struct UnitTest {
     compiler: String,
     sources: Vec<String>,
+    framework: Option<String>,
 }
 
 impl UnitTest {
@@ -131,9 +132,21 @@ impl UnitTest {
                     .into_iter()
                     .map(|elem| format!("{}/{}", dir_path, elem))
                     .collect(),
+                framework: toml.framework,
             }),
             _ => Err(MissingKeys::UnitTest),
         }
+    }
+
+    fn invalid_framework(&self, config: &crate::config::Config) -> Result<(), String> {
+        if let Some(test_framework) = &self.framework {
+            if config.get_framework(&test_framework).is_none() {
+                return Err(test_framework.clone());
+            } else {
+                return Ok(());
+            }
+        }
+        Ok(())
     }
 }
 
@@ -244,6 +257,13 @@ impl Test {
             // Self::UnitTest(unit_test, dirs) => unit_test.run(submission),
             // Self::Sources(sources, dirs) => sources.run(submission),
             // Self::CompiledTogether(compiled_together, dirs) => compiled_together.run(submission),
+        }
+    }
+
+    pub fn invalid_framework(&self, config: &crate::config::Config) -> Result<(), String> {
+        match self {
+            Self::UnitTest(unit_test) => unit_test.invalid_framework(config),
+            _ => Ok(()),
         }
     }
 }

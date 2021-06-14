@@ -1,0 +1,18 @@
+[info]
+name = "ft_strlen"
+authors = [
+    "Ryan Lucas"
+]
+difficulty = 2 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["ft_strlen.c"]
+
+[test]
+test_type = "unit-test"
+sources = ["unit_test.cpp"]
+flags = ["-Wall", "-Wextra", "-Werror"]
+compiler = "g++"
+framework = "gtest"
+subject = "ft_strlen.subject"

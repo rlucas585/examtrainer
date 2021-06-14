@@ -33,6 +33,7 @@ pub struct Test {
     pub args: Option<Vec<Vec<String>>>,
     pub expected_stdout: Option<String>,
     pub expected_stderr: Option<String>,
+    pub framework: Option<String>,
 }
 
 /// A PDS used as a target for parsing of Question .toml files

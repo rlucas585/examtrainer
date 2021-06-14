@@ -50,6 +50,8 @@ impl Question {
         let subject_directory =
             Self::validate_subject_directory(&question_directory, &toml.test.subject)?;
         let test: Test = Test::build_from_toml(toml.test, dir_path)?;
+        test.invalid_framework(config)
+            .map_err(|e| QuestionError::InvalidFramework(e))?;
         let submission: Submission = Submission::build_from_toml(toml.submission)?;
         Ok(Self {
             name,
@@ -329,6 +331,23 @@ mod tests {
             TestResult::Failed(error) => error,
         };
         assert!(matches!(error, TestError::Timeout));
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_framework() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let dir_path = format!("{}/{}", config.question_dir(), "Z_invalid_framework_strlen");
+        let file = format!("{}/{}", dir_path, "ft_strlen.toml");
+        let buffer = fs::read_to_string(file)?;
+        let toml: toml::Question =
+            toml_parse::from_str(&buffer).map_err(|e| Error::Question(e.into()))?;
+        let question_res = Question::build_from_toml(&config, toml, &dir_path);
+        assert!(question_res.is_err());
+        match question_res.unwrap_err() {
+            QuestionError::InvalidFramework(s) => assert_eq!(s, "catch2"),
+            _ => panic!("Wrong error type for invalid framework test"),
+        }
         Ok(())
     }
 }

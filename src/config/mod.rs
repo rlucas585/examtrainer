@@ -152,4 +152,26 @@ mod tests {
         );
         Ok(())
     }
+
+    #[test]
+    #[ignore]
+    fn invalid_framework_test() -> Result<(), ConfigError> {
+        let config_res = Config::new_from("tst/resources/invalid_framework_config1.toml");
+        assert!(config_res.is_err());
+        match config_res.unwrap_err() {
+            ConfigError::InvalidFrameworkDir(s) => assert_eq!(s, "/home/rlucas/googletest"),
+            _ => panic!("Incorrect enum result for invalid framework_test"),
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_framework_test_no_prefix() -> Result<(), ConfigError> {
+        let config_res = Config::new_from("tst/resources/invalid_framework_config2.toml");
+        assert!(config_res.is_err());
+        match config_res.unwrap_err() {
+            ConfigError::InvalidFramework => Ok(()),
+            _ => panic!("Incorrect enum result for invalid framework_test"),
+        }
+    }
 }

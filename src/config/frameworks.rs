@@ -36,8 +36,7 @@ fn add_to_hashmap(
         if !val.starts_with("-l") && !val.starts_with("-L") {
             return Err(ConfigError::InvalidFramework);
         }
-        if val.starts_with("-L") {
-            let path_str = &val[2..];
+        if let Some(path_str) = val.strip_prefix("-L") {
             let path = Path::new(path_str);
             if !path.exists() || !path.is_dir() {
                 return Err(ConfigError::InvalidFrameworkDir(path_str.into()));

@@ -51,7 +51,7 @@ impl Question {
             Self::validate_subject_directory(&question_directory, &toml.test.subject)?;
         let test: Test = Test::build_from_toml(toml.test, dir_path)?;
         test.invalid_framework(config)
-            .map_err(|e| QuestionError::InvalidFramework(e))?;
+            .map_err(QuestionError::InvalidFramework)?;
         let submission: Submission = Submission::build_from_toml(toml.submission)?;
         Ok(Self {
             name,
@@ -285,6 +285,7 @@ mod tests {
             }
             TestError::IncorrectOutput(trace) => trace,
             TestError::Timeout => panic!("This test case should pass, but it timed out!"),
+            _ => panic!("TestError should have IncorrectOutput type"),
         };
         assert_eq!(
             trace.to_string(),
@@ -359,7 +360,12 @@ mod tests {
         assert!(question.is_some());
         let question = question.unwrap();
         let test_result = question.grade(&config)?;
-        println!("{:?}", test_result);
-        Ok(())
+        match test_result {
+            TestResult::Passed => Ok(()),
+            TestResult::Failed(error) => {
+                println!("{}", error);
+                panic!("This test should have passed")
+            }
+        }
     }
 }

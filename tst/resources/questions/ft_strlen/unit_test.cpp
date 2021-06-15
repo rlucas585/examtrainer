@@ -9,7 +9,7 @@ TEST(strlen, empty) {
 
 TEST(strlen, short) {
     char buf[] = "short string";
-    EXPECT_EQ(ft_strlen(buf), 13);
+    EXPECT_EQ(ft_strlen(buf), 12);
 }
 
 TEST(strlen, long) {
@@ -23,7 +23,7 @@ TEST(strlen, long) {
         "long string long string long string long string long string long string "
         "long string long string long string long string long string long string "
         "long string long string long string long string long string long string ";
-    EXPECT_EQ(ft_strlen(buf), 721);
+    EXPECT_EQ(ft_strlen(buf), 720);
 }
 
 TEST(strlen, middle_null) {

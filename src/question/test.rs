@@ -30,6 +30,7 @@ use std::path::Path;
 pub enum TestError {
     DoesNotCompile(String),
     IncorrectOutput(Trace),
+    FailedUnitTest(Trace),
     Timeout,
 }
 
@@ -38,6 +39,7 @@ impl fmt::Display for TestError {
         match self {
             Self::DoesNotCompile(s) => write!(f, "Compilation error: {}", s),
             Self::IncorrectOutput(trace) => write!(f, "IncorrectOutput, Trace: {}", trace),
+            Self::FailedUnitTest(trace) => write!(f, "Unit test failed, Trace: {}", trace),
             Self::Timeout => write!(f, "Submission executable timedout"),
         }
     }
@@ -68,6 +70,7 @@ impl Exec {
         dirs: &QuestionDirs,
     ) -> Result<TestResult, QuestionError> {
         match submission {
+            // TODO: Add a check here to confirm the binary file exists
             Submission::Exec(exec) => self.run_with_binary(exec.name()),
             Submission::Sources(sources) => {
                 let mut compiler = Compiler::new(sources.compiler());
@@ -152,51 +155,76 @@ impl UnitTest {
         Ok(())
     }
 
-    // fn run(
-    //     &self,
-    //     submission: &Submission,
-    //     dirs: &QuestionDirs,
-    //     config: &Config,
-    // ) -> Result<TestResult, QuestionError> {
-    //     match submission {
-    //         Submission::Sources(sources) => {
-    //             let mut compiler = Compiler::new(sources.compiler());
-    //             for source in sources.sources().iter() {
-    //                 compiler.add_source(format!("{}/{}", dirs.submit_directory, source));
-    //             }
-    //             for source in self.sources.iter() {
-    //                 compiler.add_source(format!("{}/{}", dirs.question_directory, source));
-    //             }
-    //             if let Some(flags) = self.flags {
-    //                 for flag in flags.iter() {
-    //                     compiler.add_flag(flag);
-    //                 }
-    //             }
-    //             if let Some(framework_name) = self.framework {
-    //                 let framework_flags = config.get_framework(framework_name).unwrap();
-    //                 for flag in framework_flags.iter() {
-    //                     compiler.add_flag(flag);
-    //                 }
-    //             }
-    //             let compile_result = compiler.compile()?;
-    //             let binary = match compile_result {
-    //                 CompileResult::Ok(binary_name) => binary_name,
-    //                 CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
-    //             };
-    //             let binary = format!("./{}", binary);
-    //             self.run_with_binary(&binary)
-    //         }
-    //         _ => QuestionError::InvalidTestType(String::from(
-    //             "Unit test cannot be run with any submission type other than sources",
-    //         )),
-    //     }
-    // }
+    fn run(
+        &self,
+        submission: &Submission,
+        dirs: &QuestionDirs,
+        config: &Config,
+    ) -> Result<TestResult, QuestionError> {
+        match submission {
+            Submission::Sources(sources) => {
+                let compile_result = self.compile_binary(sources, dirs, config)?;
+                let binary = match compile_result {
+                    CompileResult::Ok(binary_name) => binary_name,
+                    CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
+                };
+                let binary = format!("./{}", binary);
+                self.run_with_binary(&binary)
+            }
+            _ => Err(QuestionError::InvalidTestType(String::from(
+                "Unit test cannot be run with any submission type other than sources",
+            ))),
+        }
+    }
 
-    // fn run_with_binary(&self, binary: &str) -> Result<TestResult, QuestionError> {
-    //     let mut trace = Trace::new();
-    //     let dummy_args: [String; 0] = [];
-    //     let output = match run_binary_with_args(binary, &dummy_args)?;
-    // }
+    fn compile_binary(
+        &self,
+        sources: &crate::question::submission::Sources,
+        dirs: &QuestionDirs,
+        config: &Config,
+    ) -> Result<CompileResult, QuestionError> {
+        let mut compiler = Compiler::new(&self.compiler);
+        for source in sources.sources().iter() {
+            compiler.add_source(format!("{}/{}", dirs.submit_directory, source));
+        }
+        for source in self.sources.iter() {
+            compiler.add_source(source.clone());
+            // compiler.add_source(format!("{}/{}", dirs.question_directory, source));
+        }
+        if let Some(flags) = &self.flags {
+            for flag in flags.iter() {
+                compiler.add_flag(flag);
+            }
+        }
+        if let Some(framework_name) = &self.framework {
+            let framework_flags = config.get_framework(framework_name).unwrap();
+            for flag in framework_flags.iter() {
+                compiler.add_flag(flag);
+            }
+        }
+        compiler.compile()
+    }
+
+    fn run_with_binary(&self, binary: &str) -> Result<TestResult, QuestionError> {
+        let mut trace = Trace::new();
+        let dummy_args: [String; 0] = [];
+        let output = match run_binary_with_args(binary, &dummy_args)? {
+            BinaryResult::Output(output) => output,
+            BinaryResult::Timeout => {
+                remove_binary(binary)?;
+                return Ok(TestResult::Failed(TestError::Timeout));
+            }
+        };
+        if output.code() != 0 {
+            trace.unit_test_output(output);
+        }
+        remove_binary(binary)?;
+        if trace.exists() {
+            Ok(TestResult::Failed(TestError::FailedUnitTest(trace)))
+        } else {
+            Ok(TestResult::Passed)
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -303,7 +331,7 @@ impl Test {
     ) -> Result<TestResult, QuestionError> {
         match self {
             Self::Exec(exec) => exec.run(submission, dirs),
-            // Self::UnitTest(unit_test) => unit_test.run(submission, dirs, config),
+            Self::UnitTest(unit_test) => unit_test.run(submission, dirs, config),
             _ => unimplemented!("Have not yet implemented test for different types"),
             // Self::Sources(sources, dirs) => sources.run(submission),
             // Self::CompiledTogether(compiled_together, dirs) => compiled_together.run(submission),
@@ -406,6 +434,7 @@ mod tests {
             }
             TestError::IncorrectOutput(trace) => trace,
             TestError::Timeout => panic!("This test case should pass, but it timed out!"),
+            _ => panic!("TestError should have IncorrectOutput type"),
         };
         assert_eq!(
             trace.to_string(),

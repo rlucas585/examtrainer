@@ -1,0 +1,22 @@
+[info]
+name = "Z_countdown_sources_wrong"
+authors = [
+    "Ryan Lucas"
+]
+difficulty = 1 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["ft_countdown.c"]
+compiler = "gcc"
+
+[test]
+test_type = "sources"
+sources = ["ft_countdown.c"]
+compiler = "gcc"
+subject = "ft_countdown.subject"
+args = [
+    [],
+    ["I'll", "be", "ignored"],
+]
+

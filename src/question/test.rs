@@ -88,7 +88,9 @@ impl Exec {
                     CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
                 };
                 let binary = format!("./{}", binary);
-                self.run_with_binary(&binary)
+                let result_val = self.run_with_binary(&binary);
+                remove_binary(&binary)?;
+                result_val
             }
         }
     }
@@ -103,7 +105,6 @@ impl Exec {
             let submit_output = match run_binary_with_args(binary, args)? {
                 BinaryResult::Output(output) => output,
                 BinaryResult::Timeout => {
-                    remove_binary(binary)?;
                     return Ok(TestResult::Failed(TestError::Timeout));
                 }
             };
@@ -111,7 +112,6 @@ impl Exec {
                 trace.binary_output(args, test_output, submit_output);
             }
         }
-        remove_binary(binary)?;
         if trace.exists() {
             Ok(TestResult::Failed(TestError::IncorrectOutput(trace)))
         } else {
@@ -165,10 +165,9 @@ impl UnitTest {
             Submission::Sources(sources) => {
                 let compile_result = self.compile_binary(sources, dirs, config)?;
                 let binary = match compile_result {
-                    CompileResult::Ok(binary_name) => binary_name,
+                    CompileResult::Ok(binary_name) => format!("./{}", binary_name),
                     CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
                 };
-                let binary = format!("./{}", binary);
                 self.run_with_binary(&binary)
             }
             _ => Err(QuestionError::InvalidTestType(String::from(
@@ -189,7 +188,6 @@ impl UnitTest {
         }
         for source in self.sources.iter() {
             compiler.add_source(source.clone());
-            // compiler.add_source(format!("{}/{}", dirs.question_directory, source));
         }
         if let Some(flags) = &self.flags {
             for flag in flags.iter() {
@@ -231,19 +229,113 @@ impl UnitTest {
 pub struct Sources {
     compiler: String,
     sources: Vec<String>,
+    args: Vec<Vec<String>>,
+    flags: Option<Vec<String>>,
 }
 
 impl Sources {
     fn build_from_toml(toml: question::toml::Test, dir_path: &str) -> Result<Self, MissingKeys> {
-        match (toml.compiler, toml.sources) {
-            (Some(compiler), Some(sources)) => Ok(Self {
+        match (toml.compiler, toml.sources, toml.args) {
+            (Some(compiler), Some(sources), Some(args)) => Ok(Self {
                 compiler,
                 sources: sources
                     .into_iter()
                     .map(|elem| format!("{}/{}", dir_path, elem))
                     .collect(),
+                args,
+                flags: toml.flags,
             }),
             _ => Err(MissingKeys::Sources),
+        }
+    }
+
+    fn run(
+        &self,
+        submission: &Submission,
+        dirs: &QuestionDirs,
+    ) -> Result<TestResult, QuestionError> {
+        match submission {
+            Submission::Exec(exec) => {
+                let test_binary = self.compile_test_binary()?;
+                let return_val = self.run_with_binaries(&test_binary, exec.name());
+                remove_binary(&test_binary)?;
+                return_val
+            }
+            Submission::Sources(sources) => {
+                let compile_result = self.compile_submit_binary(sources, dirs)?;
+                let submit_binary = match compile_result {
+                    CompileResult::Ok(binary_name) => format!("./{}", binary_name),
+                    CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
+                };
+                let test_binary = self.compile_test_binary()?;
+                let return_val = self.run_with_binaries(&test_binary, &submit_binary);
+                remove_binary(&test_binary)?;
+                remove_binary(&submit_binary)?;
+                return_val
+            }
+        }
+    }
+
+    fn compile_submit_binary(
+        &self,
+        sources: &crate::question::submission::Sources,
+        dirs: &QuestionDirs,
+    ) -> Result<CompileResult, QuestionError> {
+        let mut compiler = Compiler::new(&self.compiler);
+        for source in sources.sources().iter() {
+            compiler.add_source(format!("{}/{}", dirs.submit_directory, source));
+        }
+        if let Some(flags) = &sources.flags() {
+            for flag in flags.iter() {
+                compiler.add_flag(flag);
+            }
+        }
+        compiler.compile()
+    }
+
+    fn compile_test_binary(&self) -> Result<String, QuestionError> {
+        let mut compiler = Compiler::new(&self.compiler);
+        for source in self.sources.iter() {
+            compiler.add_source(source.clone());
+        }
+        if let Some(flags) = &self.flags {
+            for flag in flags.iter() {
+                compiler.add_flag(flag);
+            }
+        }
+        let compile_result = compiler.compile()?;
+        let binary = match compile_result {
+            CompileResult::Ok(binary_name) => format!("./{}", binary_name),
+            CompileResult::Err(error) => {
+                panic!("Test compilation failed, invalid question: {}", error)
+            }
+        };
+        Ok(binary)
+    }
+
+    fn run_with_binaries(
+        &self,
+        test_binary: &str,
+        submit_binary: &str,
+    ) -> Result<TestResult, QuestionError> {
+        let mut trace = Trace::new();
+        for args in self.args.iter() {
+            let test_output = match run_binary_with_args(test_binary, args)? {
+                BinaryResult::Output(output) => output,
+                BinaryResult::Timeout => panic!("A question's test timed out, question is invalid"),
+            };
+            let submit_output = match run_binary_with_args(submit_binary, args)? {
+                BinaryResult::Output(output) => output,
+                BinaryResult::Timeout => return Ok(TestResult::Failed(TestError::Timeout)),
+            };
+            if test_output != submit_output {
+                trace.binary_output(args, test_output, submit_output);
+            }
+        }
+        if trace.exists() {
+            Ok(TestResult::Failed(TestError::IncorrectOutput(trace)))
+        } else {
+            Ok(TestResult::Passed)
         }
     }
 }
@@ -332,8 +424,8 @@ impl Test {
         match self {
             Self::Exec(exec) => exec.run(submission, dirs),
             Self::UnitTest(unit_test) => unit_test.run(submission, dirs, config),
+            Self::Sources(sources) => sources.run(submission, dirs),
             _ => unimplemented!("Have not yet implemented test for different types"),
-            // Self::Sources(sources, dirs) => sources.run(submission),
             // Self::CompiledTogether(compiled_together, dirs) => compiled_together.run(submission),
         }
     }

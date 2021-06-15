@@ -381,7 +381,39 @@ mod tests {
             TestResult::Passed => panic!("This test should have failed"),
             TestResult::Failed(error) => match error {
                 TestError::FailedUnitTest(_) => Ok(()),
-                _ => panic!("This should be failed unit test error"),
+                _ => panic!("This test should fail with unit test error"),
+            },
+        }
+    }
+
+    #[test]
+    fn question_correct_answer_sources() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let question = question_database.get_question_by_name("ft_countdown_sources");
+        assert!(question.is_some());
+        let question = question.unwrap();
+        let test_result = question.grade(&config)?;
+        match test_result {
+            TestResult::Passed => Ok(()),
+            _ => panic!("Test should have passed"),
+        }
+    }
+
+    #[test]
+    fn question_incorrect_answer_sources() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let question = question_database.get_question_by_name("Z_countdown_sources_wrong");
+        assert!(question.is_some());
+        let question = question.unwrap();
+        let test_result = question.grade(&config)?;
+        println!("{:?}", test_result);
+        match test_result {
+            TestResult::Passed => panic!("Test should have failed"),
+            TestResult::Failed(error) => match error {
+                TestError::IncorrectOutput(_) => Ok(()),
+                _ => panic!("This test should fail with incorrect output error"),
             },
         }
     }

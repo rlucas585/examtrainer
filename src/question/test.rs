@@ -24,6 +24,7 @@ use crate::question::{
     run_binary_with_args, BinaryResult, QuestionDirs, QuestionError, Submission, Trace,
 };
 use std::fmt;
+use std::fs;
 use std::path::Path;
 
 #[derive(Debug)]
@@ -168,7 +169,9 @@ impl UnitTest {
                     CompileResult::Ok(binary_name) => format!("./{}", binary_name),
                     CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
                 };
-                self.run_with_binary(&binary)
+                let result_val = self.run_with_binary(&binary);
+                remove_binary(&binary)?;
+                result_val
             }
             _ => Err(QuestionError::InvalidTestType(String::from(
                 "Unit test cannot be run with any submission type other than sources",
@@ -208,15 +211,11 @@ impl UnitTest {
         let dummy_args: [String; 0] = [];
         let output = match run_binary_with_args(binary, &dummy_args)? {
             BinaryResult::Output(output) => output,
-            BinaryResult::Timeout => {
-                remove_binary(binary)?;
-                return Ok(TestResult::Failed(TestError::Timeout));
-            }
+            BinaryResult::Timeout => return Ok(TestResult::Failed(TestError::Timeout)),
         };
         if output.code() != 0 {
             trace.unit_test_output(output);
         }
-        remove_binary(binary)?;
         if trace.exists() {
             Ok(TestResult::Failed(TestError::FailedUnitTest(trace)))
         } else {
@@ -389,6 +388,70 @@ impl CompiledTogether {
             _ => Err(QuestionError::NoStdout),
         }
     }
+
+    fn run(
+        &self,
+        submission: &Submission,
+        dirs: &QuestionDirs,
+    ) -> Result<TestResult, QuestionError> {
+        match submission {
+            Submission::Sources(sources) => {
+                let compile_result = self.compile_binary(sources, dirs)?;
+                let binary = match compile_result {
+                    CompileResult::Ok(binary_name) => format!("./{}", binary_name),
+                    CompileResult::Err(error) => return Ok(TestResult::Failed(error)),
+                };
+                let result_val = self.run_with_binary(&binary);
+                remove_binary(&binary)?;
+                result_val
+            }
+            _ => Err(QuestionError::InvalidTestType(String::from(
+                "Expected Output cannot be run with any submission type other than sources",
+            ))),
+        }
+    }
+
+    fn compile_binary(
+        &self,
+        sources: &crate::question::submission::Sources,
+        dirs: &QuestionDirs,
+    ) -> Result<CompileResult, QuestionError> {
+        let mut compiler = Compiler::new(&self.compiler);
+        for source in sources.sources().iter() {
+            compiler.add_source(format!("{}/{}", dirs.submit_directory, source));
+        }
+        for source in self.sources.iter() {
+            compiler.add_source(source.clone());
+        }
+        if let Some(flags) = &self.flags {
+            for flag in flags.iter() {
+                compiler.add_flag(flag);
+            }
+        }
+        compiler.compile()
+    }
+
+    fn run_with_binary(&self, binary: &str) -> Result<TestResult, QuestionError> {
+        let mut trace = Trace::new();
+        let expected_out = fs::read_to_string(&self.stdout_file)?;
+        let expected_err = fs::read_to_string(&self.stderr_file)?;
+        let mut actual_out = String::new();
+        let mut actual_err = String::new();
+        for args in self.args.iter() {
+            let output = match run_binary_with_args(binary, args)? {
+                BinaryResult::Output(output) => output,
+                BinaryResult::Timeout => return Ok(TestResult::Failed(TestError::Timeout)),
+            };
+            actual_out.push_str(output.stdout());
+            actual_err.push_str(output.stderr());
+        }
+        if actual_out != expected_out || actual_err != expected_err {
+            trace.file_outputs((expected_out, expected_err), (actual_out, actual_err));
+            Ok(TestResult::Failed(TestError::IncorrectOutput(trace)))
+        } else {
+            Ok(TestResult::Passed)
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -425,8 +488,7 @@ impl Test {
             Self::Exec(exec) => exec.run(submission, dirs),
             Self::UnitTest(unit_test) => unit_test.run(submission, dirs, config),
             Self::Sources(sources) => sources.run(submission, dirs),
-            _ => unimplemented!("Have not yet implemented test for different types"),
-            // Self::CompiledTogether(compiled_together, dirs) => compiled_together.run(submission),
+            Self::CompiledTogether(compiled_together) => compiled_together.run(submission, dirs),
         }
     }
 

@@ -408,13 +408,26 @@ mod tests {
         assert!(question.is_some());
         let question = question.unwrap();
         let test_result = question.grade(&config)?;
-        println!("{:?}", test_result);
         match test_result {
             TestResult::Passed => panic!("Test should have failed"),
             TestResult::Failed(error) => match error {
                 TestError::IncorrectOutput(_) => Ok(()),
                 _ => panic!("This test should fail with incorrect output error"),
             },
+        }
+    }
+
+    #[test]
+    fn question_correct_expected_output() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let question = question_database.get_question_by_name("aff_a");
+        assert!(question.is_some());
+        let question = question.unwrap();
+        let test_result = question.grade(&config)?;
+        match test_result {
+            TestResult::Passed => Ok(()),
+            TestResult::Failed(_) => panic!("This test should have passed"),
         }
     }
 }

@@ -2,6 +2,7 @@ use std::fmt;
 use std::io;
 
 use crate::config::ConfigError;
+use crate::exam::ExamError;
 use crate::question::QuestionError;
 
 #[derive(Debug)]
@@ -10,6 +11,7 @@ pub enum Error {
     IO(io::Error),
     Question(QuestionError),
     General(String),
+    Exam(ExamError),
 }
 
 impl fmt::Display for Error {
@@ -19,6 +21,7 @@ impl fmt::Display for Error {
             Self::IO(io_e) => write!(f, "IO Error: {}", io_e),
             Self::Question(q_e) => write!(f, "Question Error: {}", q_e),
             Self::General(e) => write!(f, "Error: {}", e),
+            Self::Exam(e_e) => write!(f, "Exam Error: {}", e_e),
         }
     }
 }
@@ -43,6 +46,15 @@ impl From<QuestionError> for Error {
         match input {
             QuestionError::IO(io_e) => Error::IO(io_e),
             _ => Error::Question(input),
+        }
+    }
+}
+
+impl From<ExamError> for Error {
+    fn from(input: ExamError) -> Self {
+        match input {
+            ExamError::IO(io_e) => Self::IO(io_e),
+            _ => Self::Exam(input),
         }
     }
 }

@@ -1,0 +1,24 @@
+[info]
+name = "only_a"
+authors = [
+ "Ryan Lucas"
+]
+difficulty = 1 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["only_a.c"]
+
+[test]
+test_type = "expected-output"
+sources = []
+subject = "only_a.subject"
+expected_stdout = "only_a.out"
+expected_stderr = "only_a.err"
+compiler = "gcc"
+flags = ["-Wall", "-Wextra", "-Werror"]
+args = [
+ [],
+ [ "args", "do", "nothing" ],
+]
+

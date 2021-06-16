@@ -1,0 +1,24 @@
+[info]
+name = "only_z"
+authors = [
+ "Ryan Lucas"
+]
+difficulty = 0 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["only_z.c"]
+
+[test]
+test_type = "expected-output"
+sources = []
+subject = "only_z.subject"
+expected_stdout = "only_z.out"
+expected_stderr = "only_z.err"
+compiler = "gcc"
+flags = ["-Wall", "-Wextra", "-Werror"]
+args = [
+ [],
+ [ "ignored", "args" ]
+]
+

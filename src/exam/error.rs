@@ -28,7 +28,7 @@ impl std::error::Error for LevelError {}
 pub enum ExamError {
     InvalidTime,
     InvalidGrade,
-    InvalidLevel(LevelError),
+    InvalidLevel(usize, LevelError),
     NoLevels,
     InvalidExamFile(toml_parse::de::Error),
     IO(io::Error),
@@ -39,7 +39,7 @@ impl fmt::Display for ExamError {
         match self {
             Self::InvalidTime => write!(f, "Invalid time value"),
             Self::InvalidGrade => write!(f, "Invalid grades value"),
-            Self::InvalidLevel(e) => write!(f, "Level error: {}", e),
+            Self::InvalidLevel(index, e) => write!(f, "Level {} error: {}", index, e),
             Self::NoLevels => write!(f, "An exam must have at least one level"),
             Self::InvalidExamFile(toml_e) => write!(f, "Error parsing exam: {}", toml_e),
             Self::IO(io_e) => write!(f, "IO Error: {}", io_e),

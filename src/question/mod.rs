@@ -40,7 +40,7 @@ pub struct Question {
 impl Question {
     pub fn build_from_toml(
         config: &Config,
-        toml: crate::question::toml::Question,
+        toml: toml::Question,
         dir_path: &str,
     ) -> Result<Self, QuestionError> {
         Question::check_type_validity(&toml)?;
@@ -49,10 +49,13 @@ impl Question {
         let question_directory = dir_path.to_string();
         let subject_directory =
             Self::validate_subject_directory(&question_directory, &toml.test.subject)?;
+
         let test: Test = Test::build_from_toml(toml.test, dir_path)?;
         test.invalid_framework(config)
             .map_err(QuestionError::InvalidFramework)?;
+
         let submission: Submission = Submission::build_from_toml(toml.submission)?;
+
         Ok(Self {
             name,
             difficulty: toml.info.difficulty,

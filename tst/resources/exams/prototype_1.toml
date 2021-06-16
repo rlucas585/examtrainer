@@ -1,0 +1,37 @@
+# Exam prototype
+
+[info]
+name = "Exam_prototype"
+authors = [
+    "Ryan Lucas"
+]
+
+[time]
+hours = 0
+minutes = 20
+seconds = 0
+
+[grades]
+pass = 50
+max = 100
+
+## Valid types
+#
+# random - Pick a random question from the selection. After attempting, if the
+# answer is wrong, then a different question from the same level will be
+# selected.
+# random_repeat - Pick a random question from the selection. After attempting,
+# the same question will be given again, until it is correct.
+
+# To use just one question for every level, just supply an array with only one
+# question. Both types will have the same behaviour.
+
+[[levels]]
+type = "random"
+questions = ["only_a", "only_z", "hello", "ft_countdown", "ft_print_numbers"]
+points = [16, 11, 7, 2, 0]
+
+[[levels]]
+type = "random"
+questions = ["aff_a", "aff_first_param", "aff_last_param"]
+points = [16, 11, 7, 2, 0]

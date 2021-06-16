@@ -1,0 +1,27 @@
+[info]
+name = "aff_first_param"
+authors = [
+ "Ryan Lucas"
+]
+difficulty = 4 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["aff_first_param.c"]
+
+[test]
+test_type = "expected-output"
+sources = []
+subject = "aff_first_param.subject"
+expected_stdout = "aff_first_param.out"
+expected_stderr = "aff_first_param.err"
+compiler = "gcc"
+flags = ["-Wall", "-Wextra", "-Werror"]
+args = [
+ [],
+ ["vincent", "mit", "l'ane", "dans", "un", "pre", "et", "s'en", "vint"],
+ ["j'aime le fromage de chevre", "croissant"],
+ [],
+ ["Luffy", "Roronoa", "Nami"],
+]
+

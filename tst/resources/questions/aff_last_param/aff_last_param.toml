@@ -1,0 +1,28 @@
+[info]
+name = "aff_last_param"
+authors = [
+ "Ryan Lucas"
+]
+difficulty = 4 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["aff_last_param.c"]
+
+[test]
+test_type = "expected-output"
+sources = []
+subject = "aff_last_param.subject"
+expected_stdout = "aff_last_param.out"
+expected_stderr = "aff_last_param.err"
+compiler = "gcc"
+flags = ["-Wall", "-Wextra", "-Werror"]
+args = [
+ [],
+ ["zaz", "mange", "des", "chats"],
+ ["j'aime le savon"],
+ ["croissant", "j'aime le savon"],
+ [],
+ ["Luffy", "Roronoa", "Nami"],
+]
+

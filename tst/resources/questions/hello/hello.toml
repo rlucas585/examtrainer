@@ -1,0 +1,24 @@
+[info]
+name = "hello"
+authors = [
+    "Ryan Lucas"
+]
+difficulty = 2 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["hello.c"]
+
+[test]
+test_type = "expected-output"
+sources = ["main.c"]
+subject = "hello.subject"
+expected_stdout = "hello.out"
+expected_stderr = "hello.err"
+compiler = "gcc"
+flags = ["-Wall", "-Wextra", "-Werror"]
+args = [
+    [],
+    ["Ryan", "Lucas"],
+    ["did", "you", "know", "shinigami", "love", "apples"]
+]

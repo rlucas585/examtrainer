@@ -1,0 +1,24 @@
+[info]
+name = "ft_print_numbers"
+authors = [
+ "Ryan Lucas"
+]
+difficulty = 1 # Scale from 0-100
+
+[submission]
+submission_type = "sources"
+sources = ["ft_print_numbers.c"]
+
+[test]
+test_type = "expected-output"
+sources = ["main.c"]
+subject = "ft_print_numbers.subject"
+expected_stdout = "ft_print_numbers.out"
+expected_stderr = "ft_print_numbers.err"
+compiler = "gcc"
+flags = ["-Wall", "-Wextra", "-Werror"]
+args = [
+ [],
+ ["these", "args", "are", "ignored"],
+]
+

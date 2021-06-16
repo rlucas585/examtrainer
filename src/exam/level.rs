@@ -67,7 +67,18 @@ mod tests {
         let decoded: exam::toml::Level =
             toml_parse::from_str(level_text).map_err(|_| LevelError::NoQuestions)?;
         let level = Level::build_from_toml(decoded, &question_database)?;
-        println!("{:?}", level);
+        assert!(matches!(level.kind, LevelType::Random));
+        assert_eq!(
+            level.questions,
+            vec![
+                "only_a",
+                "only_z",
+                "hello",
+                "ft_countdown",
+                "ft_print_numbers"
+            ]
+        );
+        assert_eq!(level.points, vec![16, 11, 7, 2, 0]);
         Ok(())
     }
 }

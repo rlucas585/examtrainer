@@ -19,7 +19,7 @@ impl QuestionDB {
     /// cannot be created for any reason, then a Warning is displayed on the screen, along with the
     /// reason for failure (a [`QuestionError`]).
     pub fn new(config: &Config) -> Result<Self, Error> {
-        let question_dirs = std::fs::read_dir(&config.question_dir())?.filter(|entry| {
+        let question_dirs = std::fs::read_dir(config.question_dir())?.filter(|entry| {
             if let Ok(file) = entry {
                 file.path().is_dir()
             } else {

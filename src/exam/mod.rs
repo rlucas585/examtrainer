@@ -1,3 +1,4 @@
+pub mod database;
 pub mod error;
 mod grades;
 mod level;
@@ -13,6 +14,7 @@ use std::time::Duration;
 #[derive(Debug)]
 pub struct Exam {
     name: String,
+    description: Option<String>,
     grades: Grades,
     time: Duration,
     levels: Vec<Level>,
@@ -26,10 +28,35 @@ impl Exam {
         let levels = create_levels(toml.levels, database)?;
         Ok(Self {
             name,
+            description: toml.info.description,
             grades,
             time,
             levels,
         })
+    }
+
+    pub fn build_from_dir_entry(
+        exam_file: &DirEntry,
+        database: &QuestionDB,
+    ) -> Result<Self, ExamError> {
+        if exam_file.path().is_dir() {
+            return Err(ExamError::NotToml);
+        }
+        if let Some(extension) = exam_file.path().extension() {
+            if extension == "toml" {
+                let buffer = std::fs::read_to_string(exam_file.path())?;
+                let toml: toml::Exam = toml_parse::from_str(&buffer)?;
+                Exam::build_from_toml(toml, database)
+            } else {
+                Err(ExamError::NotToml)
+            }
+        } else {
+            Err(ExamError::NotToml)
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }
 
@@ -73,6 +100,7 @@ mod tests {
     use super::*;
     use crate::config::Config;
     use crate::error::Error;
+    use std::collections::HashMap;
     #[test]
     fn exam_creation() -> Result<(), Error> {
         let config = Config::new_from("tst/resources/test_config2.toml")?;
@@ -110,6 +138,29 @@ mod tests {
         assert_eq!((exam.grades.pass(), exam.grades.max()), (50, 100));
         assert_eq!(exam.time, Duration::from_secs(1200));
         assert_eq!(exam.levels.len(), 2);
+        Ok(())
+    }
+
+    #[test]
+    fn exam_create_from_dir_entry() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let exam_dir = std::fs::read_dir(config.exam_dir())?.filter(|entry| {
+            if let Ok(file) = entry {
+                file.path().is_file()
+            } else {
+                false
+            }
+        });
+        let mut exams = HashMap::new();
+        for file in exam_dir.into_iter().flatten() {
+            match Exam::build_from_dir_entry(&file, &question_database) {
+                Ok(exam) => {
+                    exams.insert(exam.name().to_string(), exam);
+                }
+                Err(e) => println!("{}", e),
+            }
+        }
         Ok(())
     }
 }

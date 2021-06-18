@@ -4,6 +4,7 @@ use serde::Deserialize;
 pub struct Info {
     pub name: String,
     pub authors: Option<Vec<String>>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

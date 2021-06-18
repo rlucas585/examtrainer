@@ -30,6 +30,7 @@ pub enum ExamError {
     InvalidGrade,
     InvalidLevel(usize, LevelError),
     NoLevels,
+    NotToml,
     InvalidExamFile(toml_parse::de::Error),
     IO(io::Error),
 }
@@ -41,6 +42,7 @@ impl fmt::Display for ExamError {
             Self::InvalidGrade => write!(f, "Invalid grades value"),
             Self::InvalidLevel(index, e) => write!(f, "Level {} error: {}", index, e),
             Self::NoLevels => write!(f, "An exam must have at least one level"),
+            Self::NotToml => write!(f, "File in exam directory is not a toml file"),
             Self::InvalidExamFile(toml_e) => write!(f, "Error parsing exam: {}", toml_e),
             Self::IO(io_e) => write!(f, "IO Error: {}", io_e),
         }

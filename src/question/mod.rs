@@ -3,7 +3,7 @@ mod compiler;
 pub mod database;
 pub mod error;
 mod submission;
-mod test;
+pub mod test;
 mod toml;
 mod trace;
 

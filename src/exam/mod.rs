@@ -99,7 +99,8 @@ fn convert_time_to_duration(time: toml::Time) -> Result<Duration, ExamError> {
 mod tests {
     use super::*;
     use crate::config::Config;
-    use crate::error::Error;
+    use crate::exam::error::LevelError;
+    use crate::Error;
     use std::collections::HashMap;
     #[test]
     fn exam_creation() -> Result<(), Error> {
@@ -141,6 +142,8 @@ mod tests {
         Ok(())
     }
 
+    // This test is using a directory that contains a file with the same exam config as is used in
+    // the test above.
     #[test]
     fn exam_create_from_dir_entry() -> Result<(), Error> {
         let config = Config::new_from("tst/resources/test_config2.toml")?;
@@ -160,6 +163,58 @@ mod tests {
                 }
                 Err(e) => println!("{}", e),
             }
+        }
+        assert!(exams.contains_key("Exam_prototype"));
+        Ok(())
+    }
+
+    #[test]
+    fn create_invalid_exam() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let exam_text = r#"
+            [info]
+            name = "Exam_prototype"
+            authors = [
+                "Ryan Lucas"
+            ]
+
+            [time]
+            hours = 0
+            minutes = 20
+            seconds = 0
+
+            [grades]
+            pass = 50
+            max = 100
+                        
+            [[levels]]
+            type = "random"
+            questions = ["only_a", "nonexistent_question", "hello", "ft_countdown", "ft_print_numbers"]
+            points = [16, 11, 7, 2, 0]
+
+            [[levels]]
+            type = "random"
+            questions = ["aff_a", "aff_first_param", "aff_last_param"]
+            points = [16, 11, 7, 2, 0]
+            "#;
+        let decoded: toml::Exam =
+            toml_parse::from_str(exam_text).map_err(|e| Error::Exam(e.into()))?;
+        let exam_result = Exam::build_from_toml(decoded, &question_database);
+        assert!(exam_result.is_err());
+        let error = exam_result.unwrap_err();
+        assert!(matches!(error, ExamError::InvalidLevel(0, _)));
+        match error {
+            ExamError::InvalidLevel(n, e) => {
+                assert_eq!(n, 0);
+                match e {
+                    LevelError::MissingQuestion(question) => {
+                        assert_eq!(question, "nonexistent_question".to_string())
+                    }
+                    _ => panic!("Incorrect error type for test"),
+                }
+            }
+            _ => panic!("Incorrect error type for test"),
         }
         Ok(())
     }

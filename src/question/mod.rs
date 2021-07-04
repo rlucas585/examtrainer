@@ -16,6 +16,8 @@ use crate::config::Config;
 use crate::question::error::MissingKeys;
 use crate::question::test::TestResult;
 use crate::utils::Range;
+use colored::*;
+use std::fmt;
 use std::fs::DirEntry;
 use std::path::Path;
 use submission::Submission;
@@ -31,6 +33,7 @@ pub struct QuestionDirs {
 #[derive(Debug)]
 pub struct Question {
     name: String,
+    description: Option<String>,
     difficulty: u32,
     directories: QuestionDirs,
     submission: Submission,
@@ -58,6 +61,7 @@ impl Question {
 
         Ok(Self {
             name,
+            description: toml.info.description,
             difficulty: toml.info.difficulty,
             directories: QuestionDirs {
                 submit_directory,
@@ -162,6 +166,16 @@ impl Question {
 
     pub fn grade(&self, config: &Config) -> Result<TestResult, QuestionError> {
         self.test.run(&self.submission, &self.directories, config)
+    }
+}
+
+impl fmt::Display for Question {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(description) = &self.description {
+            write!(f, "{} - {}", format!("{}", self.name).green(), description)
+        } else {
+            write!(f, "{}", format!("{}", self.name).green())
+        }
     }
 }
 
@@ -449,5 +463,23 @@ mod tests {
                 _ => panic!("This test should fail with incorrect output error"),
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod display {
+    use super::*;
+    use crate::Error;
+
+    #[test]
+    fn question_display() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+        let question = question_database.get_question_by_name("ft_countdown_sources");
+
+        assert!(question.is_some());
+        let question = question.unwrap();
+        println!("{}", question);
+        Ok(())
     }
 }

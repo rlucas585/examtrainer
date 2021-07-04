@@ -9,6 +9,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 pub struct Info {
     pub name: String,
+    pub description: Option<String>,
     pub authors: Option<Vec<String>>,
     pub difficulty: u32,
 }

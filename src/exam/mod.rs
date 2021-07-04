@@ -5,6 +5,7 @@ mod level;
 mod toml;
 
 use crate::question::QuestionDB;
+pub use database::ExamDB;
 pub use error::ExamError;
 use grades::Grades;
 use level::Level;

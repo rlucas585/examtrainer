@@ -1,85 +1,13 @@
+pub mod attempt;
+
 use crate::config::Config;
 use crate::question::test::TestResult;
 use crate::question::Question;
 use crate::Error;
+use colored::*;
+use std::fmt;
 
-enum Status {
-    Current,
-    Passed,
-    Failed,
-}
-
-pub struct Attempt {
-    question_name: String,
-    level: u32,
-    attempt: u32,
-    points: u32,
-    status: Status,
-}
-
-impl Attempt {
-    pub fn pass(&mut self) -> u32 {
-        self.status = Status::Passed;
-        self.points
-    }
-
-    pub fn fail(&mut self) {
-        self.status = Status::Failed;
-    }
-}
-
-struct AttemptBuilder {
-    question_name: Option<String>,
-    level: Option<u32>,
-    attempt: Option<u32>,
-    points: Option<u32>,
-}
-
-impl AttemptBuilder {
-    pub fn new() -> Self {
-        Self {
-            question_name: None,
-            level: None,
-            attempt: None,
-            points: None,
-        }
-    }
-    pub fn name(mut self, name: String) -> Self {
-        self.question_name = Some(name);
-        self
-    }
-    pub fn level(mut self, level: u32) -> Self {
-        self.level = Some(level);
-        self
-    }
-    pub fn attempt(mut self, attempt: u32) -> Self {
-        self.attempt = Some(attempt);
-        self
-    }
-    pub fn points(mut self, points: u32) -> Self {
-        self.points = Some(points);
-        self
-    }
-    pub fn build(self) -> Result<Attempt, Error> {
-        match self {
-            Self {
-                question_name: Some(question_name),
-                level: Some(level),
-                attempt: Some(attempt),
-                points: Some(points),
-            } => Ok(Attempt {
-                question_name,
-                level,
-                attempt,
-                points,
-                status: Status::Current,
-            }),
-            _ => Err(Error::General(
-                "build called on incomplete AttemptBuilder".to_string(),
-            )),
-        }
-    }
-}
+use attempt::{Attempt, AttemptBuilder};
 
 struct History {
     pub attempts: Vec<Attempt>,
@@ -94,6 +22,28 @@ impl History {
 
     pub fn push(&mut self, new_assignment: Attempt) {
         self.attempts.push(new_assignment)
+    }
+}
+
+impl fmt::Display for History {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.attempts.len() == 0 {
+            write!(f, "")
+        } else {
+            let mut current_level = self.attempts.last().unwrap().level;
+            writeln!(f, "Assignments: ")?;
+            writeln!(f, "  Level {}", format!("{}", current_level).green())?;
+            for assignment in self.attempts.iter().rev() {
+                current_level = if assignment.level < current_level {
+                    writeln!(f, "  Level {}", format!("{}", assignment.level).green())?;
+                    assignment.level
+                } else {
+                    current_level
+                };
+                writeln!(f, "    {}", assignment)?;
+            }
+            Ok(())
+        }
     }
 }
 
@@ -183,7 +133,7 @@ mod tests {
     use crate::exam::error::LevelError;
     use crate::exam::ExamError;
     use crate::question::QuestionDB;
-    use crate::Error;
+    use attempt::Status;
 
     #[test]
     fn user_creation() -> Result<(), Error> {
@@ -252,20 +202,39 @@ mod tests {
         assert!(matches!(assignment.status, Status::Passed));
         Ok(())
     }
+}
+
+#[cfg(test)]
+mod display {
+    use super::*;
+    use crate::question::QuestionDB;
 
     #[test]
-    fn attempt() -> Result<(), Error> {
-        let attempt = AttemptBuilder::new()
-            .name("hello_world".to_string())
-            .level(0)
-            .attempt(0)
-            .points(16)
-            .build()?;
-        assert_eq!(attempt.question_name, "hello_world");
-        assert_eq!(attempt.level, 0);
-        assert_eq!(attempt.attempt, 0);
-        assert_eq!(attempt.points, 16);
-        assert!(matches!(attempt.status, Status::Current));
+    fn history_display() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+
+        let question = question_database.get_question_by_name("aff_a");
+        assert!(question.is_some());
+        let question = question.unwrap();
+
+        let mut user = User::new();
+
+        println!("{}", user.history);
+        user.assign_question(question, 16)?;
+        println!("{}", user.history);
+        user.grade(&config)?;
+        println!("{}", user.history);
+
+        let question = question_database.get_question_by_name("hello_world");
+        assert!(question.is_some());
+        let question = question.unwrap();
+
+        user.assign_question(question, 10)?;
+        println!("{}", user.history);
+        user.grade(&config)?;
+        // println!("{}", user.history);
+
         Ok(())
     }
 }

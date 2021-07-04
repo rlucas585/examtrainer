@@ -1,5 +1,6 @@
 [info]
 name = "ft_countdown_sources"
+description = "Print numbers from 9 to 0"
 authors = [
     "Ryan Lucas"
 ]

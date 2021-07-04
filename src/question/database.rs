@@ -4,6 +4,7 @@ use crate::error::Error;
 use crate::utils::Range;
 use colored::*;
 use std::collections::HashMap;
+use std::fmt;
 use std::fs::DirEntry;
 
 #[derive(Debug)]
@@ -48,6 +49,15 @@ impl QuestionDB {
             }
         }
         out
+    }
+}
+
+impl fmt::Display for QuestionDB {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for (_, question) in self.questions.iter() {
+            writeln!(f, "{}", question)?;
+        }
+        Ok(())
     }
 }
 
@@ -116,6 +126,20 @@ mod tests {
         assert!(!viable_questions.iter().any(|&q| q.name() == "hello_world"));
         assert!(viable_questions.iter().any(|&q| q.name() == "aff_a"));
         assert!(viable_questions.iter().any(|&q| q.name() == "first_word"));
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod display {
+    use super::*;
+
+    #[test]
+    fn question_database_display() -> Result<(), Error> {
+        let config = Config::new_from("tst/resources/test_config2.toml")?;
+        let question_database = QuestionDB::new(&config)?;
+
+        println!("{}", question_database);
         Ok(())
     }
 }

@@ -3,6 +3,7 @@ use crate::config::Config;
 use crate::question::QuestionDB;
 use colored::*;
 use std::collections::HashMap;
+use std::fmt;
 use std::fs::DirEntry;
 
 #[derive(Debug)]
@@ -31,6 +32,15 @@ impl ExamDB {
 
     pub fn get_exam_by_name(&self, name: &str) -> Option<&Exam> {
         self.exams.get(name)
+    }
+}
+
+impl fmt::Display for ExamDB {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for (_, exam) in self.exams.iter() {
+            writeln!(f, "{}", exam)?;
+        }
+        Ok(())
     }
 }
 

@@ -1,3 +1,8 @@
+pub mod help;
+
+pub use help::*;
+
+use crate::Error;
 use colored::*;
 
 use std::io::{self, Read, Write};
@@ -31,26 +36,21 @@ _____  __   _   __  __ _____ ___    _   ___ _  _ ___ ___
     );
 }
 
-pub fn main_menu_help() {
-    println!("Possible commands are:");
-    println!(
-        "  {} - List all questions currently loaded by Examtrainer",
-        "questions".green()
-    );
-    println!(
-        "  {} - List all exams currently loaded by Examtrainer",
-        "exams".green()
-    );
-    println!("  {} - Clear the terminal screen", "clear".green());
-    println!("  {} - Show these commands", "help".green());
-    println!("  {} - Exit examtrainer", "quit".green());
-}
-
 pub fn main_menu_prompt() {
     print!("{}> ", "examshell-admin".yellow());
     let _ = io::stdout().flush();
 }
 
+pub fn prompt() {
+    print!("{}> ", "examshell".yellow());
+    let _ = io::stdout().flush();
+}
+
 pub fn unrecognised_command(command: &str) {
     println!("Unrecognised command: '{}' ", command);
+}
+
+pub fn clear_screen() -> Result<(), Error> {
+    print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
+    io::stdout().flush().map_err(|e| e.into())
 }

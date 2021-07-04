@@ -1,3 +1,6 @@
+use crate::output;
+use crate::question::QuestionDB;
+use crate::user::User;
 use crate::Error;
 use std::io::{self, Read, Write};
 
@@ -6,14 +9,33 @@ pub fn read_input() -> Result<String, Error> {
     let stdin = io::stdin();
 
     stdin.read_line(&mut buffer)?;
-    let first_whitespace = buffer.find(|c: char| c.is_whitespace());
-    if let Some(trim_point) = first_whitespace {
+    let new_line = buffer.find(|c: char| c == '\n');
+    if let Some(trim_point) = new_line {
         buffer.truncate(trim_point);
     }
     Ok(buffer)
 }
 
-pub fn clear_screen() -> Result<(), Error> {
-    print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
-    io::stdout().flush().map_err(|e| e.into())
+pub fn single_question_mode(question_name: &str, questions: &QuestionDB) -> Result<(), Error> {
+    if let Some(question) = questions.get_question_by_name(question_name) {
+        let mut user = User::new();
+        let mut input;
+        user.assign_question(question, 1)?;
+
+        loop {
+            output::prompt();
+            input = read_input()?;
+
+            match &input[..] {
+                "help" => output::single_question_help(),
+                "clear" => output::clear_screen()?,
+                "exit" => return Ok(()),
+                "quit" => return Ok(()),
+                _ => output::unrecognised_command(&input),
+            }
+        }
+    } else {
+        println!("The question '{}' was not found", question_name);
+        Ok(())
+    }
 }

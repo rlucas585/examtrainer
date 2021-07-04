@@ -5,10 +5,12 @@ mod level;
 mod toml;
 
 use crate::question::QuestionDB;
+use colored::*;
 pub use database::ExamDB;
 pub use error::ExamError;
 use grades::Grades;
 use level::Level;
+use std::fmt;
 use std::fs::DirEntry;
 use std::time::Duration;
 
@@ -58,6 +60,16 @@ impl Exam {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+}
+
+impl fmt::Display for Exam {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(description) = &self.description {
+            write!(f, "{} - {}", format!("{}", self.name).green(), description)
+        } else {
+            write!(f, "{}", format!("{}", self.name).green())
+        }
     }
 }
 

@@ -23,9 +23,10 @@ pub fn run(config: Config, questions: QuestionDB, exams: ExamDB) -> Result<(), E
         input = shell::read_input()?;
 
         match &input[..] {
-            "questions" => print!("{}", questions),
+            "list questions" => print!("{}", questions),
+            "list exams" => print!("{}", exams),
             "help" => output::main_menu_help(),
-            "clear" => shell::clear_screen()?,
+            "clear" => output::clear_screen()?,
             "exit" => return Ok(()),
             "quit" => return Ok(()),
             _ => output::unrecognised_command(&input),

@@ -3,7 +3,7 @@ use examtrainer::exam::ExamDB;
 use examtrainer::question::QuestionDB;
 use std::process::exit;
 
-// TODO take first argument as Config file location
+// TODO take first argument as Config file location (or accept flags potentially)
 fn main() {
     let config = Config::new_from("tst/resources/config_1.toml").unwrap_or_else(|e| {
         eprintln!("Error: {}", e);

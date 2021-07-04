@@ -10,6 +10,10 @@ pub fn main_menu_help() {
         "  {} - List all exams currently loaded by Examtrainer",
         "list exams".green()
     );
+    println!(
+        "  {} - Enter single question mode, to practice on one question",
+        "question <question_name>".green()
+    );
     println!("  {} - Clear the terminal screen", "clear".green());
     println!("  {} - Show these commands", "help".green());
     println!("  {} - Exit examtrainer", "quit".green());

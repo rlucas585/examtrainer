@@ -16,17 +16,24 @@ pub fn read_input() -> Result<String, Error> {
     Ok(buffer)
 }
 
+pub fn wait_for_enter() {
+    println!("(Press Enter to continue...)");
+    io::stdin().read(&mut [0]).unwrap();
+}
+
 pub fn single_question_mode(question_name: &str, questions: &QuestionDB) -> Result<(), Error> {
     if let Some(question) = questions.get_question_by_name(question_name) {
         let mut user = User::new();
         let mut input;
         user.assign_question(question, 1)?;
+        output::single_question_status(&user)?;
 
         loop {
             output::prompt();
             input = read_input()?;
 
             match &input[..] {
+                "status" => output::single_question_status(&user)?,
                 "help" => output::single_question_help(),
                 "clear" => output::clear_screen()?,
                 "exit" => return Ok(()),

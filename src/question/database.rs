@@ -55,7 +55,7 @@ impl QuestionDB {
 impl fmt::Display for QuestionDB {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (_, question) in self.questions.iter() {
-            writeln!(f, "{}", question)?;
+            writeln!(f, "  {}", question)?;
         }
         Ok(())
     }

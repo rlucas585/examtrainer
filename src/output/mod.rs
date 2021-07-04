@@ -2,6 +2,9 @@ pub mod help;
 
 pub use help::*;
 
+use crate::question::Question;
+use crate::shell;
+use crate::user::User;
 use crate::Error;
 use colored::*;
 
@@ -28,7 +31,7 @@ _____  __   _   __  __ _____ ___    _   ___ _  _ ___ ___
     println!("Welcome to Examtrainer\n");
     println!(
         "This program was initially designed as a tool to practice for exams within the 42\
-        Curriculum, but it can be used to practice just any basic programming exercises.\n"
+        Curriculum, but it can be used to practice any basic programming exercises.\n"
     );
 
     println!(
@@ -53,4 +56,50 @@ pub fn unrecognised_command(command: &str) {
 pub fn clear_screen() -> Result<(), Error> {
     print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
     io::stdout().flush().map_err(|e| e.into())
+}
+
+fn print_directory_info(question: &Question) {
+    println!(
+        "The subject is located at {}",
+        format!("{}", question.directories().submit_directory).green()
+    );
+    println!("You must turn in your files in a subdirectory of your submit directory");
+    println!(
+        "with the same name as your assignment ({})",
+        format!("{}", question.directories().submit_directory).red()
+    );
+    println!(
+        "Examtrainer does not require you to {}, but remember to do this in the real exam!!",
+        "git push".red()
+    );
+}
+
+pub fn single_question_confirm() {
+    println!("You are registered to begin the question: {}", "question");
+    println!("You will have all the time you'd like to complete this question\n");
+    shell::wait_for_enter();
+    println!("");
+}
+
+pub fn single_question_status(user: &User) -> Result<(), Error> {
+    if let Some(question) = user.current_question() {
+        print_divider_bar();
+        println!("Examshell: Single Question Mode\n");
+        println!(
+            "Your question is {}",
+            format!("{}", question.name()).green()
+        );
+        print_directory_info(question);
+        print_divider_bar();
+        Ok(())
+    } else {
+        Err(Error::General(
+            "User was not given assignment correctly".to_string(),
+        ))
+    }
+}
+
+pub fn single_question_exit(question: &Question) {
+    // TODO: Implement this !!
+    unimplemented!("Implement me please");
 }

@@ -22,13 +22,17 @@ pub fn run(config: Config, questions: QuestionDB, exams: ExamDB) -> Result<(), E
         output::main_menu_prompt();
         input = shell::read_input()?;
 
-        match &input[..] {
-            "list questions" => print!("{}", questions),
-            "list exams" => print!("{}", exams),
-            "help" => output::main_menu_help(),
-            "clear" => output::clear_screen()?,
-            "exit" => return Ok(()),
-            "quit" => return Ok(()),
+        let args = input.as_str().split(' ').collect::<Vec<&str>>();
+        let args = args.as_slice();
+
+        match args {
+            ["list", "questions"] => print!("{}", questions),
+            ["list", "exams"] => print!("{}", exams),
+            ["question", name] => shell::single_question_mode(*name, &questions)?,
+            ["help"] => output::main_menu_help(),
+            ["clear"] => output::clear_screen()?,
+            ["exit"] => return Ok(()),
+            ["quit"] => return Ok(()),
             _ => output::unrecognised_command(&input),
         }
     }

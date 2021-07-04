@@ -82,6 +82,10 @@ impl<'a> User<'a> {
         self.history.attempts.last()
     }
 
+    pub fn current_question(&self) -> Option<&Question> {
+        self.current_question
+    }
+
     pub fn current_question_name(&self) -> Option<&'a str> {
         match self.current_question {
             Some(q) => Some(q.name()),

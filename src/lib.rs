@@ -28,7 +28,7 @@ pub fn run(config: Config, questions: QuestionDB, exams: ExamDB) -> Result<(), E
         match args {
             ["list", "questions"] => print!("{}", questions),
             ["list", "exams"] => print!("{}", exams),
-            ["question", name] => shell::single_question_mode(*name, &questions)?,
+            ["question", name] => shell::single_question_mode(&config, *name, &questions)?,
             ["help"] => output::main_menu_help(),
             ["clear"] => output::clear_screen()?,
             ["exit"] => return Ok(()),

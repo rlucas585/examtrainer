@@ -2,6 +2,7 @@ pub mod help;
 
 pub use help::*;
 
+use crate::config::Config;
 use crate::question::Question;
 use crate::shell;
 use crate::user::User;
@@ -50,7 +51,11 @@ pub fn prompt() {
 }
 
 pub fn unrecognised_command(command: &str) {
-    println!("Unrecognised command: '{}' ", command);
+    println!(
+        "Unrecognised command: '{}', type '{}' for a list of possible commands",
+        command,
+        "help".green()
+    );
 }
 
 pub fn clear_screen() -> Result<(), Error> {
@@ -58,10 +63,10 @@ pub fn clear_screen() -> Result<(), Error> {
     io::stdout().flush().map_err(|e| e.into())
 }
 
-fn print_directory_info(question: &Question) {
+fn print_directory_info(config: &Config, question: &Question) {
     println!(
         "The subject is located at {}",
-        format!("{}", question.directories().submit_directory).green()
+        format!("{}/{}", config.submit_dir(), question.name()).green()
     );
     println!("You must turn in your files in a subdirectory of your submit directory");
     println!(
@@ -81,7 +86,7 @@ pub fn single_question_confirm() {
     println!("");
 }
 
-pub fn single_question_status(user: &User) -> Result<(), Error> {
+pub fn single_question_status(config: &Config, user: &User) -> Result<(), Error> {
     if let Some(question) = user.current_question() {
         print_divider_bar();
         println!("Examshell: Single Question Mode\n");
@@ -89,7 +94,7 @@ pub fn single_question_status(user: &User) -> Result<(), Error> {
             "Your question is {}",
             format!("{}", question.name()).green()
         );
-        print_directory_info(question);
+        print_directory_info(config, question);
         print_divider_bar();
         Ok(())
     } else {
@@ -99,7 +104,9 @@ pub fn single_question_status(user: &User) -> Result<(), Error> {
     }
 }
 
-pub fn single_question_exit(question: &Question) {
-    // TODO: Implement this !!
-    unimplemented!("Implement me please");
+pub fn single_question_intro(question: &Question) {
+    println!(
+        "You are registered to begin the question: {}",
+        format!("{}", question.name()).green()
+    );
 }

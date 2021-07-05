@@ -20,7 +20,7 @@ pub fn run(config: Config, questions: QuestionDB, exams: ExamDB) -> Result<(), E
             ["list", "questions"] => print!("{}", questions),
             ["list", "exams"] => print!("{}", exams),
             ["question", name] => super::single_question::run(&config, *name, &questions)?,
-            ["exam", name] => super::exam::run(name)?,
+            ["exam", name] => super::exam::run(&config, *name, &questions, &exams)?,
             ["config"] => output::print_config_info(&config),
             ["help"] => output::main_menu_help(),
             ["clear"] => output::clear_screen()?,

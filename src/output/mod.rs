@@ -129,5 +129,14 @@ pub fn print_config_info(config: &Config) {
 }
 
 pub fn print_timeout() {
-    println!("\n\nTime is up, the exam is now over");
+    println!("\nTime is up, the exam is now over");
+}
+
+pub fn unexpected_error(e: Error) {
+    println!("An unexpected error occurred during the exam: {}", e);
+    println!(
+        "If you see this message, you have {} failed the exam.",
+        "NOT".red()
+    );
+    println!("Ignore any messages that follow that suggest failure");
 }

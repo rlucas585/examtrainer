@@ -9,43 +9,49 @@ use crate::Error;
 
 pub fn run(config: &Config, question_name: &str, questions: &QuestionDB) -> Result<(), Error> {
     if let Some(question) = questions.get_question_by_name(question_name) {
-        question.create_directories(config)?;
-
-        let mut user = User::new();
-        let mut input;
-        user.assign_question(question, 1)?;
-
-        output::single_question_intro(question);
-        super::wait_for_enter();
-        output::single_question_status(config, &user)?;
-
-        loop {
-            output::prompt();
-            input = super::read_input()?;
-
-            match &input[..] {
-                "grademe" => {
-                    let correct_answer = grade(config, &mut user, question_name)?;
-                    match correct_answer {
-                        Yes => return Ok(()),
-                        No => user.assign_question(question, 1)?,
-                    }
-                }
-                "status" => output::single_question_status(config, &user)?,
-                "help" => output::single_question_help(),
-                "clear" => output::clear_screen()?,
-                "exit" | "quit" => {
-                    let answer = exit(config, question)?;
-                    if matches!(answer, Yes) {
-                        return Ok(());
-                    }
-                }
-                _ => output::unrecognised_command(&input),
-            }
-        }
+        run_internal(config, question)
     } else {
         println!("The question '{}' was not found", question_name);
         Ok(())
+    }
+}
+
+fn run_internal(config: &Config, question: &Question) -> Result<(), Error> {
+    let question_name = question.name();
+
+    question.create_directories(config)?;
+
+    let mut user = User::new();
+    let mut input;
+    user.assign_question(question, 1)?;
+
+    output::single_question_intro(question);
+    super::wait_for_enter();
+    output::single_question_status(config, &user)?;
+
+    loop {
+        output::prompt();
+        input = super::read_input()?;
+
+        match &input[..] {
+            "grademe" => {
+                let correct_answer = grade(config, &mut user, question_name)?;
+                match correct_answer {
+                    Yes => return Ok(()),
+                    No => user.assign_question(question, 1)?,
+                }
+            }
+            "status" => output::single_question_status(config, &user)?,
+            "help" => output::single_question_help(),
+            "clear" => output::clear_screen()?,
+            "exit" | "quit" => {
+                let answer = exit(config, question)?;
+                if matches!(answer, Yes) {
+                    return Ok(());
+                }
+            }
+            _ => output::unrecognised_command(&input),
+        }
     }
 }
 

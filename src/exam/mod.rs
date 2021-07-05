@@ -61,6 +61,10 @@ impl Exam {
     pub fn name(&self) -> &str {
         &self.name
     }
+
+    pub fn duration(&self) -> Duration {
+        self.time
+    }
 }
 
 impl fmt::Display for Exam {

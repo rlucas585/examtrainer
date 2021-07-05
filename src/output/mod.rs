@@ -127,3 +127,7 @@ pub fn print_failure() {
 pub fn print_config_info(config: &Config) {
     println!("{}", config);
 }
+
+pub fn print_timeout() {
+    println!("\n\nTime is up, the exam is now over");
+}

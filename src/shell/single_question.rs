@@ -9,8 +9,6 @@ use crate::Error;
 
 pub fn run(config: &Config, question_name: &str, questions: &QuestionDB) -> Result<(), Error> {
     if let Some(question) = questions.get_question_by_name(question_name) {
-        super::create_standard_directories(config)?;
-
         question.create_directories(config)?;
 
         let mut user = User::new();

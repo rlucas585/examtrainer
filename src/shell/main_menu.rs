@@ -7,6 +7,7 @@ use crate::Error;
 
 pub fn run(config: Config, questions: QuestionDB, exams: ExamDB) -> Result<(), Error> {
     let mut input;
+    super::create_standard_directories(&config)?;
 
     loop {
         output::main_menu_prompt();
@@ -19,6 +20,7 @@ pub fn run(config: Config, questions: QuestionDB, exams: ExamDB) -> Result<(), E
             ["list", "questions"] => print!("{}", questions),
             ["list", "exams"] => print!("{}", exams),
             ["question", name] => super::single_question::run(&config, *name, &questions)?,
+            ["exam", name] => super::exam::run(name)?,
             ["config"] => output::print_config_info(&config),
             ["help"] => output::main_menu_help(),
             ["clear"] => output::clear_screen()?,

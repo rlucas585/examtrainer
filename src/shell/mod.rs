@@ -1,3 +1,4 @@
+mod exam;
 pub mod main_menu;
 mod single_question;
 

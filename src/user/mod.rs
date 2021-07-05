@@ -27,7 +27,7 @@ impl History {
 
 impl fmt::Display for History {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.attempts.len() == 0 {
+        if self.attempts.is_empty() {
             write!(f, "")
         } else {
             let mut current_level = self.attempts.last().unwrap().level;
@@ -87,15 +87,12 @@ impl<'a> User<'a> {
     }
 
     pub fn current_question_name(&self) -> Option<&'a str> {
-        match self.current_question {
-            Some(q) => Some(q.name()),
-            None => None,
-        }
+        self.current_question.map(|q| q.name())
     }
 
     pub fn grade(&mut self, config: &Config) -> Result<TestResult, Error> {
         let result = match self.current_question {
-            Some(question) => question.grade(config).map_err(|e| Error::Question(e))?,
+            Some(question) => question.grade(config).map_err(Error::Question)?,
             None => {
                 return Err(Error::General(
                     "grade called on User with no assigned question!".to_string(),
@@ -109,9 +106,9 @@ impl<'a> User<'a> {
     }
 
     fn pass_question(&mut self, result: TestResult) -> Result<TestResult, Error> {
-        let active_assignment = self.history.attempts.last_mut().ok_or(Error::General(
-            "pass_question called for User without question assigned".to_string(),
-        ))?;
+        let active_assignment = self.history.attempts.last_mut().ok_or_else(|| {
+            Error::General("pass_question called for User without question assigned".to_string())
+        })?;
         let points_gained = active_assignment.pass();
         self.points += points_gained;
         self.level += 1;
@@ -121,13 +118,19 @@ impl<'a> User<'a> {
     }
 
     fn fail_question(&mut self, result: TestResult) -> Result<TestResult, Error> {
-        let active_assignment = self.history.attempts.last_mut().ok_or(Error::General(
-            "pass_question called for User without question assigned".to_string(),
-        ))?;
+        let active_assignment = self.history.attempts.last_mut().ok_or_else(|| {
+            Error::General("pass_question called for User without question assigned".to_string())
+        })?;
         active_assignment.fail();
         self.attempt += 1;
         self.current_question = None;
         Ok(result)
+    }
+}
+
+impl<'a> Default for User<'a> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

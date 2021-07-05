@@ -31,9 +31,9 @@ impl Level {
         database: &QuestionDB,
     ) -> Result<Self, LevelError> {
         let kind = LevelType::new(toml.kind)?;
-        if toml.questions.len() == 0 {
+        if toml.questions.is_empty() {
             Err(LevelError::NoQuestions)
-        } else if toml.points.len() == 0 {
+        } else if toml.points.is_empty() {
             Err(LevelError::NoPoints)
         } else {
             for question in toml.questions.iter() {

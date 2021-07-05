@@ -66,9 +66,9 @@ impl Exam {
 impl fmt::Display for Exam {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(description) = &self.description {
-            write!(f, "{} - {}", format!("{}", self.name).green(), description)
+            write!(f, "{} - {}", self.name.green(), description)
         } else {
-            write!(f, "{}", format!("{}", self.name).green())
+            write!(f, "{}", self.name.green())
         }
     }
 }
@@ -77,7 +77,7 @@ fn create_levels(
     toml_vec: Vec<toml::Level>,
     database: &QuestionDB,
 ) -> Result<Vec<Level>, ExamError> {
-    if toml_vec.len() == 0 {
+    if toml_vec.is_empty() {
         return Err(ExamError::NoLevels);
     }
 

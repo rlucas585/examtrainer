@@ -11,9 +11,9 @@ pub enum Status {
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Status::Current => write!(f, "{}", format!("Current").blue()),
-            Status::Passed => write!(f, "{}", format!("Passed").green()),
-            Status::Failed => write!(f, "{}", format!("Failed").red()),
+            Status::Current => write!(f, "{}", "Current".blue()),
+            Status::Passed => write!(f, "{}", "Passed".green()),
+            Status::Failed => write!(f, "{}", "Failed".red()),
         }
     }
 }
@@ -42,8 +42,8 @@ impl fmt::Display for Attempt {
         write!(
             f,
             "{}: {} for {} potential points ({})",
-            format!("{}", self.attempt).yellow(),
-            format!("{}", self.question_name).green(),
+            self.attempt.to_string().yellow(),
+            &self.question_name.green(),
             self.points,
             self.status
         )
@@ -100,6 +100,12 @@ impl AttemptBuilder {
                 "build called on incomplete AttemptBuilder".to_string(),
             )),
         }
+    }
+}
+
+impl Default for AttemptBuilder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

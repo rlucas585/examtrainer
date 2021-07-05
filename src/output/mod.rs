@@ -8,7 +8,7 @@ use crate::user::User;
 use crate::Error;
 use colored::*;
 
-use std::io::{self, Read, Write};
+use std::io::{self, Write};
 
 fn print_divider_bar() {
     let (width, _) = term_size::dimensions().unwrap_or((50, 50));
@@ -21,7 +21,7 @@ fn print_divider_bar() {
 
 pub fn intro() {
     let intro = "
-_____  __   _   __  __ _____ ___    _   ___ _  _ ___ ___ 
+______  __   _   __  __ _____ ___    _   ___ _  _ ___ ___ 
 | __\\ \\/ /  /_\\ |  \\/  |_   _| _ \\  /_\\ |_ _| \\| | __| _ \\
 | _| >  <  / _ \\| |\\/| | | | |   / / _ \\ | || .` | _||   /
 |___/_/\\_\\/_/ \\_\\_|  |_| |_| |_|_\\/_/ \\_\\___|_|\\_|___|_|_\\
@@ -70,7 +70,7 @@ fn print_directory_info(config: &Config, question: &Question) {
     println!("You must turn in your files in a subdirectory of your submit directory");
     println!(
         "with the same name as your assignment ({})",
-        format!("{}", question.directories().submit_directory).red()
+        question.directories().submit_directory.red()
     );
     println!(
         "Examtrainer does not require you to {}, but remember to do this in the real exam!!",
@@ -82,10 +82,7 @@ pub fn single_question_status(config: &Config, user: &User) -> Result<(), Error>
     if let Some(question) = user.current_question() {
         print_divider_bar();
         println!("Examshell: Single Question Mode\n");
-        println!(
-            "Your question is {}",
-            format!("{}", question.name()).green()
-        );
+        println!("Your question is {}", question.name().green());
         print_directory_info(config, question);
         print_divider_bar();
         Ok(())
@@ -99,7 +96,7 @@ pub fn single_question_status(config: &Config, user: &User) -> Result<(), Error>
 pub fn single_question_intro(question: &Question) {
     println!(
         "You are registered to begin the question: {}",
-        format!("{}", question.name()).green()
+        question.name().green()
     );
 }
 

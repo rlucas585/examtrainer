@@ -199,9 +199,9 @@ impl Question {
 impl fmt::Display for Question {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(description) = &self.description {
-            write!(f, "{} - {}", format!("{}", self.name).green(), description)
+            write!(f, "{} - {}", self.name.green(), description)
         } else {
-            write!(f, "{}", format!("{}", self.name).green())
+            write!(f, "{}", self.name.green())
         }
     }
 }

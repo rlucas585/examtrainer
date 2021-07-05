@@ -43,15 +43,18 @@ impl Trace {
     pub fn file_outputs(&mut self, expected: (String, String), actual: (String, String)) {
         let (expected_stdout, expected_stderr) = expected;
         let (actual_stdout, actual_stderr) = actual;
-        self.data += "Failure: \n";
-        self.data += "Expected Stdout:\n";
+        self.data += "\nExpected Stdout:\n";
         self.data += &expected_stdout;
+        self.data += "\n";
         self.data += "Actual Stdout:\n";
         self.data += &actual_stdout;
+        self.data += "\n";
         self.data += "Expected Stderr:\n";
         self.data += &expected_stderr;
+        self.data += "\n";
         self.data += "Actual Stderr:\n";
         self.data += &actual_stderr;
+        self.data += "\n";
     }
 
     pub fn custom_message(&mut self, message: &str) {
@@ -79,8 +82,6 @@ mod tests {
     use std::fs;
     use std::process::Command;
 
-    // TODO: Change this to compare actual incorrect output against expected output. Not a
-    // priority.
     #[test]
     fn basic_trace() -> Result<(), Error> {
         let mut trace = Trace::new();
@@ -121,9 +122,8 @@ mod tests {
         assert_eq!(
             trace.to_string(),
             format!(
-                "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
-                "Failure: \n",
-                "Expected Stdout:\n",
+                "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+                "\nExpected Stdout:\n",
                 "\n",
                 "a\n",
                 "a\n",
@@ -132,7 +132,7 @@ mod tests {
                 "a\n",
                 "\n",
                 "a\n",
-                "Actual Stdout:\n",
+                "\nActual Stdout:\n",
                 "\n",
                 "a\n",
                 "\n",
@@ -141,8 +141,8 @@ mod tests {
                 "a\n",
                 "\n",
                 "a\n",
-                "Expected Stderr:\n",
-                "Actual Stderr:\n",
+                "\nExpected Stderr:\n",
+                "\nActual Stderr:\n\n",
             )
         );
         Ok(())

@@ -4,7 +4,6 @@ pub use help::*;
 
 use crate::config::Config;
 use crate::question::Question;
-use crate::shell;
 use crate::user::User;
 use crate::Error;
 use colored::*;
@@ -31,7 +30,7 @@ _____  __   _   __  __ _____ ___    _   ___ _  _ ___ ___
 
     println!("Welcome to Examtrainer\n");
     println!(
-        "This program was initially designed as a tool to practice for exams within the 42\
+        "This program was initially designed as a tool to practice for exams within the 42 \
         Curriculum, but it can be used to practice any basic programming exercises.\n"
     );
 
@@ -79,13 +78,6 @@ fn print_directory_info(config: &Config, question: &Question) {
     );
 }
 
-pub fn single_question_confirm() {
-    println!("You are registered to begin the question: {}", "question");
-    println!("You will have all the time you'd like to complete this question\n");
-    shell::wait_for_enter();
-    println!("");
-}
-
 pub fn single_question_status(config: &Config, user: &User) -> Result<(), Error> {
     if let Some(question) = user.current_question() {
         print_divider_bar();
@@ -109,4 +101,32 @@ pub fn single_question_intro(question: &Question) {
         "You are registered to begin the question: {}",
         format!("{}", question.name()).green()
     );
+}
+
+pub fn print_success() {
+    let success = format!(
+        "{}\n{}\n{}\n",
+        "===========================================",
+        "=                 SUCCESS                 =",
+        "===========================================",
+    )
+    .green();
+    println!("{}", success);
+    println!("You have passed the assignment\n");
+}
+
+pub fn print_failure() {
+    let failure = format!(
+        "{}\n{}\n{}\n",
+        "===========================================",
+        "=                 FAILURE                 =",
+        "===========================================",
+    )
+    .red();
+    println!("{}", failure);
+    println!("You have failed the assignment\n");
+}
+
+pub fn print_config_info(config: &Config) {
+    println!("{}", config);
 }

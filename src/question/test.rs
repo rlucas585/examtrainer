@@ -39,9 +39,9 @@ impl fmt::Display for TestError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::DoesNotCompile(s) => write!(f, "Compilation error: {}", s),
-            Self::IncorrectOutput(trace) => write!(f, "IncorrectOutput, Trace: {}", trace),
+            Self::IncorrectOutput(trace) => write!(f, "Incorrect Output, Trace: {}", trace),
             Self::FailedUnitTest(trace) => write!(f, "Unit test failed, Trace: {}", trace),
-            Self::Timeout => write!(f, "Submission executable timedout"),
+            Self::Timeout => write!(f, "Submission executable timed out"),
         }
     }
 }
@@ -365,7 +365,10 @@ impl CompiledTogether {
                 Ok(Self {
                     compiler,
                     flags: toml.flags,
-                    sources,
+                    sources: sources
+                        .into_iter()
+                        .map(|elem| format!("{}/{}", dir_path, elem))
+                        .collect(),
                     stdout_file,
                     stderr_file,
                     args,
@@ -526,7 +529,10 @@ mod tests {
                     test.flags,
                     Some(vec!("-Wall".into(), "-Wextra".into(), "-Werror".into()))
                 );
-                assert_eq!(test.sources, vec!("main.c"));
+                assert_eq!(
+                    test.sources,
+                    vec!("tst/resources/questions/hello_world/main.c")
+                );
                 assert_eq!(
                     test.stdout_file,
                     "tst/resources/questions/hello_world/hello_world.out"

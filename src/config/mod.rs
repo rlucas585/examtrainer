@@ -22,6 +22,7 @@ mod toml;
 pub use error::ConfigError;
 
 use frameworks::FrameworkManager;
+use std::fmt;
 
 #[derive(Debug)]
 struct Directories {
@@ -29,6 +30,17 @@ struct Directories {
     question_directory: String,
     exam_directory: String,
     subject_directory: String,
+    trace_directory: String,
+}
+
+impl fmt::Display for Directories {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "Submit directory: {}", self.submit_directory)?;
+        writeln!(f, "Question directory: {}", self.question_directory)?;
+        writeln!(f, "Exam directory: {}", self.exam_directory)?;
+        writeln!(f, "Subject directory: {}", self.subject_directory)?;
+        writeln!(f, "Trace directory: {}", self.trace_directory)
+    }
 }
 
 impl From<toml::Directories> for Directories {
@@ -38,6 +50,7 @@ impl From<toml::Directories> for Directories {
             question_directory: input.question_directory,
             exam_directory: input.exam_directory,
             subject_directory: input.subject_directory,
+            trace_directory: input.trace_directory,
         }
     }
 }
@@ -84,11 +97,20 @@ impl Config {
     pub fn exam_dir(&self) -> &str {
         &self.directories.exam_directory
     }
-    pub fn subject_directory(&self) -> &str {
+    pub fn subject_dir(&self) -> &str {
         &self.directories.subject_directory
+    }
+    pub fn trace_dir(&self) -> &str {
+        &self.directories.trace_directory
     }
     pub fn get_framework(&self, name: &str) -> Option<&Vec<String>> {
         self.frameworks.get(name)
+    }
+}
+
+impl fmt::Display for Config {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.directories)
     }
 }
 

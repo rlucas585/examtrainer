@@ -174,23 +174,23 @@ impl Question {
             .arg(&self.directories.submit_directory)
             .arg(format!("{}/{}", config.submit_dir(), self.name))
             .output()?;
+        let subject_path = format!("{}/{}", config.subject_dir(), self.name);
+        if std::path::Path::new(&subject_path).exists() {
+            crate::utils::delete_directory(&subject_path)?;
+        }
         std::process::Command::new("cp")
             .arg("-r")
             .arg(&self.directories.subject_directory)
-            .arg(format!("{}/{}", config.subject_directory(), self.name))
+            .arg(format!("{}/{}", config.subject_dir(), self.name))
             .output()?;
         Ok(())
     }
 
     pub fn delete_directories(&self, config: &Config) -> Result<(), QuestionError> {
-        println!(
-            "deleting this: {}",
-            format!("{}/{}", config.subject_directory(), self.name)
-        );
         std::process::Command::new("rm")
             .arg("-rf")
             .arg(&self.directories.submit_directory)
-            .arg(format!("{}/{}", config.subject_directory(), self.name))
+            .arg(format!("{}/{}", config.subject_dir(), self.name))
             .output()?;
         Ok(())
     }

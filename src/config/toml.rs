@@ -30,6 +30,7 @@ pub struct Directories {
     pub question_directory: String,
     pub exam_directory: String,
     pub subject_directory: String,
+    pub trace_directory: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -113,6 +114,7 @@ submit_directory = \"{0}/rendu\"
 question_directory = \"{0}/.config/examtrainer/questions\"
 exam_directory = \"{0}/.config/examtrainer/exams\"
 subject_directory = \"{0}/subjects\"
+trace_directory = \"{0}/trace\"
 ",
         home
     );

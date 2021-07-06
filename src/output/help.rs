@@ -34,3 +34,15 @@ pub fn single_question_help() {
         "quit".green()
     );
 }
+
+pub fn exam_help() {
+    println!("Possible commands are:");
+    println!("  {} - Grade the submission", "grademe".green());
+    println!("  {} - Display session status", "status".green());
+    println!("  {} - Clear the terminal screen", "clear".green());
+    println!("  {} - Show these commands", "help".green());
+    println!(
+        "  {} - Exit the exam and return to the main menu",
+        "quit".green()
+    );
+}

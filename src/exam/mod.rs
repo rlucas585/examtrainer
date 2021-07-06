@@ -67,10 +67,24 @@ impl Exam {
         self.time
     }
 
+    pub fn pass_grade(&self) -> u32 {
+        self.grades.pass()
+    }
+
+    pub fn max_grade(&self) -> u32 {
+        self.grades.max()
+    }
+
     pub fn select_question(&self, user: &User) -> Option<&str> {
         let level_index = (user.level() as usize).min(self.levels.len() - 1);
         let level = self.levels.get(level_index).unwrap();
         level.select_question(user)
+    }
+
+    pub fn get_points(&self, user: &User) -> u32 {
+        let level_index = (user.level() as usize).min(self.levels.len() - 1);
+        let level = self.levels.get(level_index).unwrap();
+        level.get_points(user)
     }
 }
 

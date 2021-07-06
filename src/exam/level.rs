@@ -2,6 +2,7 @@ use crate::exam;
 use crate::exam::error::LevelError;
 use crate::question::QuestionDB;
 use crate::user::User;
+use rand::Rng;
 
 #[derive(Debug)]
 enum LevelType {
@@ -58,17 +59,43 @@ impl Level {
     }
 
     fn random_select(&self, user: &User) -> Option<&str> {
-        let possible_questions: Vec<&str> = self
-            .questions
-            .iter()
-            .filter(|q| !user.has_passed_question(q))
-            .map(|e| e.as_ref())
-            .collect();
-        None
+        let possible_questions = self.possible_questions(user);
+
+        if possible_questions.is_empty() {
+            None
+        } else {
+            let size = possible_questions.len();
+            let index = rand::thread_rng().gen_range(0..size);
+            self.questions.get(index).map(|x| &**x)
+        }
     }
 
     fn random_repeat_select(&self, user: &User) -> Option<&str> {
-        None
+        if let Some(last_assignment) = user.get_last_assignment() {
+            if last_assignment.is_failed() {
+                self.questions
+                    .iter()
+                    .find(|elem| **elem == last_assignment.question_name)
+                    .map(|x| &**x)
+            } else {
+                self.random_select(user)
+            }
+        } else {
+            self.random_select(user)
+        }
+    }
+
+    fn possible_questions(&self, user: &User) -> Vec<&str> {
+        self.questions
+            .iter()
+            .filter(|q| !user.has_passed_question(q))
+            .map(|e| e.as_ref())
+            .collect()
+    }
+
+    pub fn get_points(&self, user: &User) -> u32 {
+        let index = (user.attempt() as usize).min(self.points.len() - 1);
+        self.points[index]
     }
 }
 

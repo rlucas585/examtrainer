@@ -1,10 +1,8 @@
 use super::YesNoAnswer::{self, No, Yes};
 use crate::config::Config;
 use crate::output;
-use crate::question::test::TestResult;
 use crate::question::{Question, QuestionDB};
 use crate::user::User;
-use crate::utils::timestamp;
 use crate::Error;
 
 pub fn run(config: &Config, question_name: &str, questions: &QuestionDB) -> Result<(), Error> {
@@ -35,15 +33,15 @@ fn run_internal(config: &Config, question: &Question) -> Result<(), Error> {
 
         match &input[..] {
             "grademe" => {
-                let correct_answer = grade(config, &mut user, question_name)?;
-                match correct_answer {
-                    Yes => return Ok(()),
-                    No => user.assign_question(question, 1)?,
+                let answer_is_correct = super::grade(config, &mut user)?;
+                match answer_is_correct {
+                    true => return Ok(()),
+                    false => user.assign_question(question, 1)?,
                 }
             }
             "status" => output::single_question_status(config, &user)?,
-            "help" => output::single_question_help(),
             "clear" => output::clear_screen()?,
+            "help" => output::single_question_help(),
             "exit" | "quit" => {
                 let answer = exit(config, question)?;
                 if matches!(answer, Yes) {
@@ -52,37 +50,6 @@ fn run_internal(config: &Config, question: &Question) -> Result<(), Error> {
             }
             _ => output::unrecognised_command(&input),
         }
-    }
-}
-
-fn grade(config: &Config, user: &mut User, question_name: &str) -> Result<YesNoAnswer, Error> {
-    println!("\nAre you sure you're ready to submit? (y/n)? ");
-    let answer = super::ask_yes_or_no()?;
-    match answer {
-        Yes => {
-            let test_result = user.grade(config)?;
-            match test_result {
-                TestResult::Passed => {
-                    output::print_success();
-                    super::wait_for_enter();
-                    Ok(Yes)
-                }
-                TestResult::Failed(test_error) => {
-                    output::print_failure();
-
-                    let trace_file =
-                        format!("{}/{}-{}", config.trace_dir(), timestamp(), question_name);
-
-                    match super::ask_for_trace(&trace_file)? {
-                        Yes => super::write_trace(&trace_file, test_error)?,
-                        No => (),
-                    }
-
-                    Ok(No)
-                }
-            }
-        }
-        No => Ok(No),
     }
 }
 

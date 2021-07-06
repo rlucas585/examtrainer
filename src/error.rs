@@ -1,5 +1,6 @@
 use std::fmt;
 use std::io;
+use std::sync::PoisonError;
 
 use crate::config::ConfigError;
 use crate::exam::ExamError;
@@ -12,6 +13,7 @@ pub enum Error {
     Question(QuestionError),
     General(String),
     Exam(ExamError),
+    ConcurrencyError,
 }
 
 impl fmt::Display for Error {
@@ -22,6 +24,7 @@ impl fmt::Display for Error {
             Self::Question(q_e) => write!(f, "Question Error: {}", q_e),
             Self::General(e) => write!(f, "Error: {}", e),
             Self::Exam(e_e) => write!(f, "Exam Error: {}", e_e),
+            Self::ConcurrencyError => write!(f, "Threading Error"),
         }
     }
 }
@@ -29,6 +32,12 @@ impl fmt::Display for Error {
 impl From<io::Error> for Error {
     fn from(input: io::Error) -> Error {
         Error::IO(input)
+    }
+}
+
+impl<T> From<PoisonError<T>> for Error {
+    fn from(_: PoisonError<T>) -> Error {
+        Error::ConcurrencyError
     }
 }
 

@@ -141,6 +141,14 @@ impl<'a> User<'a> {
         self.attempt
     }
 
+    pub fn points(&self) -> u32 {
+        self.points
+    }
+
+    pub fn print_history(&self) {
+        println!("{}", self.history)
+    }
+
     pub fn has_passed_question(&self, question: &str) -> bool {
         self.history.has_passed_question(question)
     }
@@ -186,7 +194,7 @@ mod tests {
         user.assign_question(question, 16)?;
         assert_eq!(user.current_question_name(), Some("hello_world"));
 
-        let assignment = user.get_current_assignment();
+        let assignment = user.get_last_assignment();
         assert!(assignment.is_some());
         let assignment = assignment.unwrap();
         assert_eq!(assignment.question_name, "hello_world");
@@ -221,7 +229,7 @@ mod tests {
         assert_eq!(user.points, 16);
         assert_eq!(user.level, 1);
 
-        let assignment = user.get_current_assignment();
+        let assignment = user.get_last_assignment();
         assert!(assignment.is_some());
         let assignment = assignment.unwrap();
         assert!(matches!(assignment.status, Status::Passed));

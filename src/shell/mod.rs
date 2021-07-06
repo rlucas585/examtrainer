@@ -3,7 +3,11 @@ pub mod main_menu;
 mod single_question;
 
 use crate::config::Config;
+use crate::output;
 use crate::question::test::TestError;
+use crate::question::test::TestResult;
+use crate::user::User;
+use crate::utils::timestamp;
 use crate::Error;
 use colored::*;
 use std::io::{self, Read, Write};
@@ -64,4 +68,36 @@ fn write_trace(trace_file: &str, test_error: TestError) -> Result<(), Error> {
 
     write!(&mut trace_file, "{}", test_error)?;
     Ok(())
+}
+
+fn grade(config: &Config, user: &mut User) -> Result<bool, Error> {
+    println!("\nAre you sure you're ready to submit? (y/n)? ");
+    let answer = ask_yes_or_no()?;
+    match answer {
+        Yes => {
+            let test_result = user.grade(config)?;
+            match test_result {
+                TestResult::Passed => {
+                    output::print_success();
+                    wait_for_enter();
+                    Ok(true)
+                }
+                TestResult::Failed(test_error) => {
+                    output::print_failure();
+
+                    let question_name = &user.get_last_assignment().unwrap().question_name;
+                    let trace_file =
+                        format!("{}/{}-{}", config.trace_dir(), timestamp(), question_name);
+
+                    match ask_for_trace(&trace_file)? {
+                        Yes => write_trace(&trace_file, test_error)?,
+                        No => (),
+                    }
+
+                    Ok(false)
+                }
+            }
+        }
+        No => Ok(false),
+    }
 }

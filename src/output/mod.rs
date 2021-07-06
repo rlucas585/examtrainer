@@ -162,3 +162,34 @@ pub fn unexpected_error(e: Error) {
     );
     println!("Ignore any messages that follow that suggest failure");
 }
+
+pub fn no_more_questions() {
+    println!("There are no more questions that you can attempt in this exam");
+    println!("The exam will now end");
+}
+
+pub fn you_can_start() {
+    println!(
+        "You can now work on your assignment. When you are sure you're done with it, \
+        use the \"{}\" command to be graded",
+        "grademe".green()
+    );
+}
+
+pub fn exam_status(config: &Config, user: &User, exam: &Exam) {
+    if let Some(question) = user.current_question() {
+        print_divider_bar();
+        println!(
+            "You are currently at level {}",
+            user.level().to_string().green()
+        );
+        println!(
+            "Your current grade is {}/{}",
+            user.points().to_string().green(),
+            exam.max_grade()
+        );
+        user.print_history();
+        print_directory_info(config, question);
+        print_divider_bar();
+    }
+}

@@ -14,6 +14,7 @@ pub fn main_menu_help() {
         "  {} - Enter single question mode, to practice on one question",
         "question <question_name>".green()
     );
+    println!("  {} - Enter exam mode", "exam <exam_name>".green());
     println!(
         "  {} - Display current Examtrainer configuration",
         "config".green()

@@ -1,0 +1,22 @@
+# Example config.toml
+
+# Anything following a '#' is a comment, and is ignored
+
+# 'frameworks' is an optional directive. Questions for examtrainer can be created that rely on the
+# use of a third-party testing frameworks, such as GoogleTest or Catch2.
+
+frameworks = [
+# Each framework must have a 'name', and an array of 'flags', containing arguments required to
+# compile the framework correctly
+# The 'name' in the Question files must be identical to the framework listed here
+{ name = "gtest", flags = ["-lgtest", "-lpthread", "-L<path_to_googletest_installation>"] }
+]
+
+# 'directories' is a required table in `config.toml`.
+
+[directories]
+submit_directory = "/home/rlucas/rendu"
+question_directory = "/home/rlucas/.config/examtrainer/questions"
+exam_directory = "/home/rlucas/.config/examtrainer/exams"
+subject_directory = "/home/rlucas/subjects"
+trace_directory = "/home/rlucas/trace"

@@ -4,11 +4,12 @@ use crate::exam::{Exam, ExamDB};
 use crate::output;
 use crate::question::QuestionDB;
 use crate::user::User;
+use crate::utils::TimeInfo;
 use crate::Error;
 use crossbeam::thread;
-use std::sync::mpsc::{self, Receiver};
+use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::Instant;
 
 pub fn run(
     config: &Config,
@@ -33,12 +34,28 @@ fn run_internal(config: &Config, exam: &Exam, questions: &QuestionDB) -> Result<
 
     thread::scope(|s| {
         let handle = s.spawn(move |_| {
-            if let Err(e) = exam_loop(config, exam, questions, thread_user, thread_receiver) {
+            if let Err(e) = exam_loop(
+                config,
+                exam,
+                questions,
+                thread_user,
+                thread_send.clone(),
+                thread_receiver,
+            ) {
                 output::unexpected_error(e);
             }
             // Notify main thread that Exam has been exited
             thread_send.send(true).unwrap();
         });
+
+        // Wait for the User to press 'Enter' to start the exam, before beginning the exam
+        // timer
+        match main_receiver.recv() {
+            Ok(_) => (),
+            Err(_) => {
+                let _ = main_send.send(true);
+            }
+        }
 
         match main_receiver.recv_timeout(exam.duration()) {
             Ok(_) => (),
@@ -56,6 +73,7 @@ fn run_internal(config: &Config, exam: &Exam, questions: &QuestionDB) -> Result<
         .map_err(|_| Error::General("Thread error".to_string()))?
         .into_inner()
         .map_err(|_| Error::General("Thread error".to_string()))?;
+    output::report_exam_result(&end_user, exam);
     Ok(())
 }
 
@@ -64,6 +82,7 @@ fn exam_loop<'a>(
     exam: &Exam,
     questions: &'a QuestionDB,
     user: Arc<Mutex<User<'a>>>,
+    thread_send: Sender<bool>,
     thread_receiver: Receiver<bool>,
 ) -> Result<(), Error> {
     let mut input;
@@ -76,7 +95,17 @@ fn exam_loop<'a>(
 
     output::exam_intro(exam);
     super::wait_for_enter();
-    output::exam_status(config, &user, exam);
+
+    thread_send
+        .send(true)
+        .map_err(|_| Error::General("Thread error".to_string()))?;
+
+    let start = Instant::now();
+    let end_time =
+        chrono::Local::now() + chrono::Duration::seconds(exam.duration().as_secs() as i64);
+    let time_info = TimeInfo::new(start, end_time);
+
+    output::exam_status(config, &user, exam, &time_info);
     output::you_can_start();
 
     loop {
@@ -95,13 +124,16 @@ fn exam_loop<'a>(
         match &input[..] {
             "grademe" => {
                 super::grade(config, &mut user)?;
+                if user.completed_exam(exam) {
+                    return Ok(());
+                }
                 let no_more_questions = assign_new_question(config, &mut user, exam, questions)?;
                 if no_more_questions {
                     return Ok(());
                 }
-                output::exam_status(config, &user, exam);
+                output::exam_status(config, &user, exam, &time_info);
             }
-            "status" => output::exam_status(config, &user, exam),
+            "status" => output::exam_status(config, &user, exam, &time_info),
             "clear" => output::clear_screen()?,
             "help" => output::exam_help(),
             "exit" | "quit" => {

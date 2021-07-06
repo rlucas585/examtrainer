@@ -6,9 +6,10 @@ use crate::config::Config;
 use crate::exam::Exam;
 use crate::question::Question;
 use crate::user::User;
+use crate::utils;
 use crate::Error;
 use colored::*;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use std::io::{self, Write};
 
@@ -103,12 +104,7 @@ pub fn single_question_intro(question: &Question) {
 }
 
 fn duration_print(duration: &Duration) {
-    let mut total_seconds = duration.as_secs();
-    let hours = total_seconds / 3600;
-    total_seconds %= 3600;
-    let minutes = total_seconds / 60;
-    total_seconds %= 60;
-    let seconds = total_seconds;
+    let (hours, minutes, seconds) = utils::seconds_to_hours_and_minutes(duration.as_secs());
 
     let time = format!("{}hrs, {}mins and {}sec", hours, minutes, seconds).green();
     print!("{}", time);
@@ -176,7 +172,22 @@ pub fn you_can_start() {
     );
 }
 
-pub fn exam_status(config: &Config, user: &User, exam: &Exam) {
+fn print_time_info(time_info: &utils::TimeInfo) {
+    println!(
+        "The end date for this exam is: {}",
+        time_info
+            .end_time
+            .format("%d/%m/%Y %H:%M:%S")
+            .to_string()
+            .green()
+    );
+    let time_remaining = Instant::now().duration_since(time_info.start);
+    print!("You have ");
+    duration_print(&time_remaining);
+    println!(" remaining");
+}
+
+pub fn exam_status(config: &Config, user: &User, exam: &Exam, time_info: &utils::TimeInfo) {
     if let Some(question) = user.current_question() {
         print_divider_bar();
         println!(
@@ -190,6 +201,26 @@ pub fn exam_status(config: &Config, user: &User, exam: &Exam) {
         );
         user.print_history();
         print_directory_info(config, question);
+        print_time_info(time_info);
         print_divider_bar();
+    }
+}
+
+pub fn report_exam_result(user: &User, exam: &Exam) {
+    println!("You have completed the exam {}", exam.name().green());
+    if user.points() >= exam.pass_grade() {
+        println!(
+            "You scored ({}/{})",
+            user.points().to_string().green(),
+            exam.max_grade()
+        );
+        println!("You have {} the exam", "PASSED".green());
+    } else {
+        println!(
+            "You scored ({}/{})",
+            user.points().to_string().red(),
+            exam.max_grade()
+        );
+        println!("You have {} the exam", "FAILED".red());
     }
 }

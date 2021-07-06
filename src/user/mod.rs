@@ -1,6 +1,7 @@
 pub mod attempt;
 
 use crate::config::Config;
+use crate::exam::Exam;
 use crate::question::test::TestResult;
 use crate::question::Question;
 use crate::Error;
@@ -143,6 +144,15 @@ impl<'a> User<'a> {
 
     pub fn points(&self) -> u32 {
         self.points
+    }
+
+    pub fn completed_exam(&mut self, exam: &Exam) -> bool {
+        if self.points >= exam.max_grade() {
+            self.points = exam.max_grade();
+            true
+        } else {
+            false
+        }
     }
 
     pub fn print_history(&self) {

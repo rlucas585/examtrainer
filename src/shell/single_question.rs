@@ -15,8 +15,6 @@ pub fn run(config: &Config, question_name: &str, questions: &QuestionDB) -> Resu
 }
 
 fn run_internal(config: &Config, question: &Question) -> Result<(), Error> {
-    let question_name = question.name();
-
     question.create_directories(config)?;
 
     let mut user = User::new();

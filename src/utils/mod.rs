@@ -1,8 +1,10 @@
 pub mod program_output;
 pub mod range;
+pub mod time_info;
 
 pub use program_output::ProgramOutput;
 pub use range::Range;
+pub use time_info::TimeInfo;
 
 use chrono::{Datelike, Timelike};
 
@@ -25,6 +27,14 @@ pub fn timestamp() -> String {
         now.month(),
         now.year(),
     )
+}
+
+pub fn seconds_to_hours_and_minutes(mut seconds: u64) -> (u64, u64, u64) {
+    let hours = seconds / 3600;
+    seconds %= 3600;
+    let minutes = seconds / 60;
+    seconds %= 60;
+    (hours, minutes, seconds)
 }
 
 #[cfg(test)]

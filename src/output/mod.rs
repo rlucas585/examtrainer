@@ -206,6 +206,7 @@ pub fn exam_status(config: &Config, user: &User, exam: &Exam, time_info: &utils:
         );
         user.print_history();
         print_directory_info(config, question);
+        println!("");
         print_time_info(time_info);
         print_divider_bar();
     }

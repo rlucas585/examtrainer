@@ -2,6 +2,8 @@
 
 ## About The Project
 
+![main_menu_screenshot](images/main_menu.png)
+
 This project aims to:
 1. Simulate the `examshell` environment from the 42 school, allowing 42
    students (or anyone else who's interested) to practice the exams in
@@ -10,6 +12,9 @@ This project aims to:
 
 This project is currently in an **Alpha Release**. The program runs, but
 testing to date is minimal.
+
+![exam_start_screenshot](images/exam_start.png)
+![exam_middle_screenshot](images/exam_middle.png)
 
 ### Built With
 

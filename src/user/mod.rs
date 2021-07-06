@@ -7,7 +7,7 @@ use crate::Error;
 use colored::*;
 use std::fmt;
 
-use attempt::{Attempt, AttemptBuilder};
+use attempt::{Attempt, AttemptBuilder, Status};
 
 struct History {
     pub attempts: Vec<Attempt>,
@@ -22,6 +22,12 @@ impl History {
 
     pub fn push(&mut self, new_assignment: Attempt) {
         self.attempts.push(new_assignment)
+    }
+
+    pub fn has_passed_question(&self, question: &str) -> bool {
+        self.attempts
+            .iter()
+            .any(|attempt| attempt.question_name == question && attempt.status == Status::Passed)
     }
 }
 
@@ -78,7 +84,7 @@ impl<'a> User<'a> {
         Ok(())
     }
 
-    pub fn get_current_assignment(&self) -> Option<&Attempt> {
+    pub fn get_last_assignment(&self) -> Option<&Attempt> {
         self.history.attempts.last()
     }
 
@@ -125,6 +131,18 @@ impl<'a> User<'a> {
         self.attempt += 1;
         self.current_question = None;
         Ok(result)
+    }
+
+    pub fn level(&self) -> u32 {
+        self.level
+    }
+
+    pub fn attempt(&self) -> u32 {
+        self.attempt
+    }
+
+    pub fn has_passed_question(&self, question: &str) -> bool {
+        self.history.has_passed_question(question)
     }
 }
 

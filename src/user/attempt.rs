@@ -2,6 +2,7 @@ use crate::Error;
 use colored::*;
 use std::fmt;
 
+#[derive(PartialEq)]
 pub enum Status {
     Current,
     Passed,
@@ -34,6 +35,18 @@ impl Attempt {
 
     pub fn fail(&mut self) {
         self.status = Status::Failed;
+    }
+
+    pub fn is_current(&self) -> bool {
+        self.status == Status::Current
+    }
+
+    pub fn is_passed(&self) -> bool {
+        self.status == Status::Passed
+    }
+
+    pub fn is_failed(&self) -> bool {
+        self.status == Status::Failed
     }
 }
 

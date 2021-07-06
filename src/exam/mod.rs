@@ -5,6 +5,7 @@ mod level;
 mod toml;
 
 use crate::question::QuestionDB;
+use crate::user::User;
 use colored::*;
 pub use database::ExamDB;
 pub use error::ExamError;
@@ -64,6 +65,12 @@ impl Exam {
 
     pub fn duration(&self) -> Duration {
         self.time
+    }
+
+    pub fn select_question(&self, user: &User) -> Option<&str> {
+        let level_index = (user.level() as usize).min(self.levels.len() - 1);
+        let level = self.levels.get(level_index).unwrap();
+        level.select_question(user)
     }
 }
 

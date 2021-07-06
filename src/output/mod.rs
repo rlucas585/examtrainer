@@ -3,10 +3,12 @@ pub mod help;
 pub use help::*;
 
 use crate::config::Config;
+use crate::exam::Exam;
 use crate::question::Question;
 use crate::user::User;
 use crate::Error;
 use colored::*;
+use std::time::Duration;
 
 use std::io::{self, Write};
 
@@ -98,6 +100,26 @@ pub fn single_question_intro(question: &Question) {
         "You are registered to begin the question: {}",
         question.name().green()
     );
+}
+
+fn duration_print(duration: &Duration) {
+    let mut total_seconds = duration.as_secs();
+    let hours = total_seconds / 3600;
+    total_seconds %= 3600;
+    let minutes = total_seconds / 60;
+    total_seconds %= 60;
+    let seconds = total_seconds;
+
+    let time = format!("{}hrs, {}mins and {}sec", hours, minutes, seconds).green();
+    print!("{}", time);
+}
+
+pub fn exam_intro(exam: &Exam) {
+    println!("You are registered to begin the exam: {}", exam.name());
+    print!("You will have ");
+    duration_print(&exam.duration());
+    println!(" to complete this exam");
+    println!("Time will begin once you press enter to continue");
 }
 
 pub fn print_success() {

@@ -35,16 +35,18 @@ fn run_internal(config: &Config, exam: &Exam, questions: &QuestionDB) -> Result<
             if let Err(e) = exam_loop(config, exam, questions, thread_user, thread_receiver) {
                 output::unexpected_error(e);
             }
+            // Notify main thread that Exam has been exited
             thread_send.send(true).unwrap();
         });
 
-        // match main_receiver.recv_timeout(exam.duration()) {
         match main_receiver.recv_timeout(Duration::from_secs(2)) {
-            Ok(_) => println!("Thread completed successfully"),
-            Err(_) => output::print_timeout(),
+            // match main_receiver.recv_timeout(Duration::from_secs(exam.duration())) {
+            Ok(_) => (),
+            Err(_) => {
+                // Notify exam thread that timeout has been reached
+                let _ = main_send.send(true);
+            }
         }
-
-        let _ = main_send.send(true);
 
         handle.join().unwrap();
     })
@@ -64,12 +66,19 @@ fn exam_loop(
     user: Arc<Mutex<User>>,
     thread_receiver: Receiver<bool>,
 ) -> Result<(), Error> {
-    loop {
-        std::thread::sleep(Duration::from_millis(200));
+    let mut input;
 
+    output::exam_intro(exam);
+    super::wait_for_enter();
+
+    loop {
+        output::prompt();
+        input = super::read_input()?;
+
+        // Check to see if the exam has timed out
         match thread_receiver.try_recv() {
             Ok(_) => break,
-            Err(_) => (),
+            Err(_) => return Ok(output::print_timeout()),
         }
     }
     Ok(())

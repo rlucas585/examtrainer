@@ -1,6 +1,7 @@
 use crate::exam;
 use crate::exam::error::LevelError;
 use crate::question::QuestionDB;
+use crate::user::User;
 
 #[derive(Debug)]
 enum LevelType {
@@ -47,6 +48,27 @@ impl Level {
                 points: toml.points,
             })
         }
+    }
+
+    pub fn select_question(&self, user: &User) -> Option<&str> {
+        match self.kind {
+            LevelType::Random => self.random_select(user),
+            LevelType::Repeat => self.random_repeat_select(user),
+        }
+    }
+
+    fn random_select(&self, user: &User) -> Option<&str> {
+        let possible_questions: Vec<&str> = self
+            .questions
+            .iter()
+            .filter(|q| !user.has_passed_question(q))
+            .map(|e| e.as_ref())
+            .collect();
+        None
+    }
+
+    fn random_repeat_select(&self, user: &User) -> Option<&str> {
+        None
     }
 }
 

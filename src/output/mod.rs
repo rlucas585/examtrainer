@@ -161,7 +161,7 @@ pub fn unexpected_error(e: Error) {
 
 pub fn no_more_questions() {
     println!("There are no more questions that you can attempt in this exam");
-    println!("The exam will now end");
+    println!("The exam will now end\n");
 }
 
 pub fn you_can_start() {
@@ -181,10 +181,15 @@ fn print_time_info(time_info: &utils::TimeInfo) {
             .to_string()
             .green()
     );
-    let time_remaining = Instant::now().duration_since(time_info.start);
-    print!("You have ");
-    duration_print(&time_remaining);
-    println!(" remaining");
+    if let Some(time_remaining) = time_info.end_instant.checked_duration_since(Instant::now()) {
+        print!("You have ");
+        duration_print(&time_remaining);
+        println!(" remaining");
+    } else {
+        println!("You have ");
+        duration_print(&Duration::from_millis(0));
+        println!(" remaining");
+    }
 }
 
 pub fn exam_status(config: &Config, user: &User, exam: &Exam, time_info: &utils::TimeInfo) {

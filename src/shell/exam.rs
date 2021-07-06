@@ -103,7 +103,8 @@ fn exam_loop<'a>(
     let start = Instant::now();
     let end_time =
         chrono::Local::now() + chrono::Duration::seconds(exam.duration().as_secs() as i64);
-    let time_info = TimeInfo::new(start, end_time);
+    let end_instant = start + exam.duration();
+    let time_info = TimeInfo::new(start, end_time, end_instant);
 
     output::exam_status(config, &user, exam, &time_info);
     output::you_can_start();

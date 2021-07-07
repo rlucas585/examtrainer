@@ -177,7 +177,7 @@ Optional fields:
   question, "-Wall -Wextra -Werror" is recommended, as 42 use these flags
   during compilation.
 
-  ```
+```
 [test]
 test_type = "expected-output"
 sources = []
@@ -190,7 +190,7 @@ args = [
  [],
  [ "args", "do", "nothing", "for", "this", "question" ],
 ]
-  ```
+```
 
 ###### Sources Test Type
 
@@ -208,7 +208,7 @@ Optional fields:
   `expected-output`, as they are used exclusively for the test files,
   which should not fail to compile.
 
-  ```
+```
 [test]
 test_type = "sources"
 sources = ["ft_countdown.c"]
@@ -218,7 +218,7 @@ args = [
     [],
     ["I'll", "be", "ignored", "in", "this", "question"],
 ]
-  ```
+```
 
 ###### Executable Test Type
 

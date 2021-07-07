@@ -1,9 +1,9 @@
-## Examtrainer configuration files
+# Examtrainer configuration files
 
 This `examples/` folder contains examples of valid config files,
 question files, and exam files.
 
-### Config files
+## Config files
 
 A valid `config.toml` file **must** contain:
 * A path to a submission directory (`submit_directory`)
@@ -19,7 +19,7 @@ A valid `config.toml` file **may** contain:
 For an example of a valid `config.toml` file, checkout the example
 [here](config.toml).
 
-### Questions
+## Questions
 
 Questions should:
 * Be contained within their own directory, with all files associated
@@ -28,7 +28,7 @@ Questions should:
 
 An example of a valid question can be found [here](hello/)
 
-#### Question Directory layout
+### Question Directory layout
 
 An example of a valid question directory would look something like this:
 ```
@@ -61,7 +61,7 @@ In the directory above:
   submitted by the user to generate an executable, which will then be
   tested against the expected output in `hello.out`.
 
-#### Question .toml file
+### Question .toml file
 
 For an example of a valid `.toml` file, see
 [here](hello/hello.toml).
@@ -81,7 +81,7 @@ The `info` table contains the following fields:
 * `difficulty` - (**Optional**) How difficult the question is, on a
   scale of 0-100.
 
-###### Example
+##### Example
 
 ```
 [info]
@@ -93,7 +93,7 @@ authors = [
 difficulty = 2
 ```
 
-##### Submission section
+#### Submission section
 
 The `submission` table provides info about how the user should submit
 their answer.
@@ -119,7 +119,7 @@ submission_type = "sources"
 sources = ["hello_world.c"]
 ```
 
-##### Test section
+#### Test section
 
 The `test` table provides info about how the submitted code will be
 tested.
@@ -130,7 +130,7 @@ requirements.
 
 The different test types will be covered one by one.
 
-###### Test Types
+##### Test Types
 
 * `test_type` - Can be one of 4 different types:
   - `expected-output` - Compiles test source files together with user
@@ -152,7 +152,7 @@ The different test types will be covered one by one.
   Unit tests can be created without any external frameworks, but
   Examtrainer does offer the option of including them.
 
-###### Expected Output Test Type
+##### Expected Output Test Type
 
 Required fields:
 * `sources` - An array of source files contained within the question
@@ -192,7 +192,7 @@ args = [
 ]
 ```
 
-###### Sources Test Type
+##### Sources Test Type
 
 Required fields:
 * `sources` - An array of source files to be compiled **separately**
@@ -220,7 +220,7 @@ args = [
 ]
 ```
 
-###### Executable Test Type
+##### Executable Test Type
 
 Required fields:
 * `binary` - Path to a binary contained with the question, which the
@@ -241,7 +241,7 @@ args = [
 ]
 ```
 
-###### Unit Test Test Type
+##### Unit Test Test Type
 
 Required fields:
 * `compiler` - The compiler used to compile the Unit Test with the user

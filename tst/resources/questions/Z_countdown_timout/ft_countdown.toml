@@ -8,6 +8,7 @@ difficulty = 1 # Scale from 0-100
 [submission]
 submission_type = "sources"
 sources = ["ft_countdown.c"]
+flags = ["-Wall", "-Wextra", "-Werror"]
 compiler = "gcc"
 
 [test]

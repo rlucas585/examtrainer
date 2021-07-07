@@ -73,4 +73,4 @@ of valid files.
 
 ## Author
 
-- Ryan Lucas (ryanl585codam@gmail.com)
+- Ryan Lucas (email: ryanl585codam@gmail.com, slack: rlucas)

@@ -11,7 +11,7 @@ pub struct Info {
     pub name: String,
     pub description: Option<String>,
     pub authors: Option<Vec<String>>,
-    pub difficulty: u32,
+    pub difficulty: Option<u32>,
 }
 
 #[derive(Deserialize, Debug)]

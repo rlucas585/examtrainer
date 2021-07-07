@@ -34,7 +34,7 @@ pub struct QuestionDirs {
 pub struct Question {
     name: String,
     description: Option<String>,
-    difficulty: u32,
+    difficulty: Option<u32>,
     directories: QuestionDirs,
     submission: Submission,
     test: Test,
@@ -106,12 +106,16 @@ impl Question {
         &self.name
     }
 
-    pub fn difficulty(&self) -> u32 {
+    pub fn difficulty(&self) -> Option<u32> {
         self.difficulty
     }
 
     pub fn has_difficulty_in_range(&self, range: &Range) -> bool {
-        range.contains(self.difficulty)
+        if let Some(difficulty) = self.difficulty {
+            range.contains(difficulty)
+        } else {
+            false
+        }
     }
 
     fn validate_subject_directory(

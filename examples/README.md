@@ -64,7 +64,7 @@ In the directory above:
 #### Question .toml file
 
 For an example of a valid `.toml` file, see
-[here](examples/hello/hello.toml).
+[here](hello/hello.toml).
 
 ##### Info section
 
